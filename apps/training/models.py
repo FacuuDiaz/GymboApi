@@ -65,6 +65,9 @@ class Exercise(models.Model):
     # Set on a user's copy of someone else's private exercise (received with an
     # assigned or copied routine), so it is copied once per user, not every time.
     copied_from = models.ForeignKey("self", on_delete=models.SET_NULL, null=True, blank=True, related_name="copies")
+    # Community moderation: hidden content stays with its owner but leaves the catalog.
+    moderation_status = models.CharField(max_length=8, choices=[("visible", "Visible"), ("hidden", "Oculto")], default="visible")
+    published_at = models.DateTimeField(null=True, blank=True)
     version = models.PositiveIntegerField(default=1)
     deleted_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -111,6 +114,8 @@ class Routine(SyncedModel):
     # Frozen at copy time ("Basada en la rutina de @ana"), so attribution survives
     # even if the original is deleted. Never includes private data of the author.
     attribution = models.CharField(max_length=160, blank=True)
+    published_at = models.DateTimeField(null=True, blank=True)
+    moderation_status = models.CharField(max_length=8, choices=[("visible", "Visible"), ("hidden", "Oculto")], default="visible")
 
     class Meta:
         constraints = [

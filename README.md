@@ -16,7 +16,7 @@ La app móvil nunca se conecta a PostgreSQL: solo habla con esta API.
 | Ejercicios, rutinas y versiones, sesiones, mediciones, preferencias y progreso (API) | ✅ Implementado y probado |
 | Sincronización y migración invitado → cuenta | ⏳ Etapa 5 |
 | Entrenadores y alumnos (invitaciones, permisos, grupos, asignaciones con actualización automática) | ✅ Implementado y probado |
-| Compartición y comunidad | ⏳ Etapa 7 |
+| Compartir (personas y enlaces), catálogo comunitario, copias, denuncias | ✅ Implementado y probado |
 | Exportación y borrado de cuenta | ⏳ Etapa 8 |
 
 El plan completo y las decisiones tomadas están en `Gymbo/docs/ETAPA-1-AUDITORIA.md`.
@@ -301,6 +301,44 @@ Una misma cuenta puede ser alumna de varios entrenadores y entrenar a muchos alu
   - Los permisos caen en el momento.
   - El alumno conserva la rutina como propia (desbloqueada) y todo su historial.
   - Los cambios posteriores del entrenador ya no le llegan.
+
+## Compartir y comunidad
+
+| Endpoint | Quién | Qué hace |
+|---|---|---|
+| `POST routines/{id}/shares/` | Dueño | `{username, role}` con rol `viewer` (ver), `copier` (ver y copiar) o `editor` (ver, copiar y editar). La invitación queda pendiente hasta que el destinatario acepta |
+| `GET routines/{id}/shares/` | Dueño | Lista los accesos de esa rutina |
+| `GET routine-shares/?direction=received\|sent` | Ambos | Compartidas conmigo o por mí |
+| `POST routine-shares/{id}/accept/` · `…/decline/` | Destinatario | Acepta o rechaza el acceso |
+| `PATCH routine-shares/{id}/` · `DELETE …` | Dueño | Cambia el rol o revoca el acceso |
+| `GET / PATCH shared/routines/{id}/` · `POST …/copy/` | Destinatario | Según su rol: ver, editar (solo plan, nombre, objetivo y duración) o copiar |
+| `POST routines/{id}/links/` | Dueño | `{role: viewer\|copier, expires_in_days?}`. Devuelve el token **una sola vez** |
+| `GET routines/{id}/links/` · `DELETE share-links/{id}/` | Dueño | Lista los enlaces (sin el token) o revoca uno |
+| `POST shared-links/resolve/` | Cualquiera | `{token}`: ver la rutina, sin necesidad de cuenta |
+| `POST shared-links/copy/` | Con cuenta | `{token}`: copiar, si el enlace es `copier` |
+| `POST routines/{id}/publish/` · `unpublish/` | Dueño | Publica o retira la rutina del catálogo |
+| `POST exercises/{id}/publish/` · `unpublish/` | Autor | Publica o retira un ejercicio |
+| `GET community/routines/` · `community/exercises/` | Cualquiera | Catálogo con filtros `q`, `goal`, `author`, `muscle`, `equipment` |
+| `POST community/routines/{id}/copy/` · `community/exercises/{id}/copy/` | Con cuenta | Copia a tu cuenta |
+| `POST reports/` | Con cuenta | `{kind, object_id, reason, details?}` |
+
+**Reglas:**
+- **Privacidad:** publicar o compartir muestra el plan y el **username** del autor. Nunca su id, email, perfil, peso, sesiones ni progreso.
+- **Enlaces:**
+  - Token de 256 bits; en la base se guarda solo su SHA-256, más los 6 primeros caracteres para distinguirlos.
+  - Nunca dan permiso de edición y solo abren esa rutina.
+  - Pueden vencer o revocarse. Cualquier enlace inválido responde igual: 404 `link_invalid`.
+  - El token viaja en el cuerpo del POST, nunca en la URL, así no queda en los logs.
+- **Copias:**
+  - Generan una rutina nueva del que copia, inactiva, con `attribution: "Basada en «X» de @autor"`, y sin sesiones ni mediciones del autor.
+  - Editar la copia no toca el original, ni al revés.
+  - Los ejercicios que no son integrados ni propios se copian a la cuenta (una vez por ejercicio, con `copied_from`). Así la copia funciona sin conexión y no se rompe si el autor edita o borra su ejercicio.
+- **Editor:** cambia el plan del dueño. La versión queda registrada con `origin: shared_edit` y su autor. No puede activar, compartir ni borrar. Sus ejercicios privados no se aceptan en el plan, porque el dueño no podría verlos.
+- **Rutinas asignadas por un entrenador:** el alumno no puede publicarlas, compartirlas ni crear enlaces (403 `assigned_routine`).
+- **Moderación:**
+  - Solo se puede denunciar contenido publicado, y no el propio.
+  - Con **3 denuncias de personas distintas**, el contenido se oculta del catálogo hasta que lo revise el staff desde el admin.
+  - El autor lo conserva, pero no puede volver a publicarlo mientras esté oculto.
 
 ## Producción
 

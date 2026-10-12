@@ -10,6 +10,8 @@ api_v1 = [
     path("users/", include("apps.accounts.urls.users")),
     path("", include("apps.training.urls")),
     path("", include("apps.coaching.urls")),
+    # Before training's router so /routines/{id}/shares/ etc. are matched explicitly.
+    path("", include("apps.sharing.urls")),
     path("schema/", SpectacularAPIView.as_view(), name="schema"),
     path("docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="docs"),
 ]

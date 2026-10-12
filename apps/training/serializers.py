@@ -35,7 +35,7 @@ class ExerciseSerializer(serializers.ModelSerializer):
         model = Exercise
         fields = [
             "id", "slug", "is_builtin", "is_own", "name", "primary_muscle", "secondary_muscles", "equipment",
-            "category", "modality", "description", "instructions", "video_url", "visibility", "version",
+            "category", "modality", "description", "instructions", "video_url", "visibility", "published_at", "moderation_status", "version",
             "created_at", "updated_at", "deleted_at",
         ]
         read_only_fields = fields
@@ -94,7 +94,7 @@ class RoutineSerializer(serializers.ModelSerializer):
         model = Routine
         fields = [
             "id", "name", "goal", "duration_weeks", "planning_mode", "is_active", "start_date", "archived_at",
-            "visibility", "attribution", "assignment", "date_overrides", "plan", "plan_version", "version",
+            "visibility", "published_at", "moderation_status", "attribution", "assignment", "date_overrides", "plan", "plan_version", "version",
             "created_at", "updated_at", "deleted_at",
         ]
 

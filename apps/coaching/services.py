@@ -9,8 +9,8 @@ from django.db.models import Max, Q
 from django.utils import timezone
 from rest_framework import exceptions
 
-from apps.training.models import Exercise, Routine, RoutineVersion
-from apps.training.services import Conflict, resolve_exercise
+from apps.training.models import Routine, RoutineVersion
+from apps.training.services import Conflict, plan_for_owner
 
 from .models import CoachingRelationship, RoutineAssignment
 
@@ -133,47 +133,12 @@ def student_data_access(coach, relationship_id, permission: str) -> CoachingRela
 
 # ── Assignments ─────────────────────────────────────────────────────────────
 
-def _exercise_for_student(ref: str, coach, student) -> str:
-    """
-    Built-in and published exercises are shared as is. A coach's private
-    exercise is copied once into the student's account, so the student's app
-    can show it and log sessions with it.
-    """
-    exercise = resolve_exercise(ref, coach)
-    if exercise is None or exercise.is_builtin or exercise.visibility == "public" or exercise.owner_id != coach.pk:
-        return ref
-    copy = Exercise.objects.filter(owner=student, copied_from=exercise).first()
-    if copy is None:
-        copy = Exercise.objects.create(
-            owner=student, copied_from=exercise, name=exercise.name, primary_muscle=exercise.primary_muscle,
-            secondary_muscles=exercise.secondary_muscles, equipment=exercise.equipment, category=exercise.category,
-            modality=exercise.modality, description=exercise.description, instructions=exercise.instructions,
-            video_url=exercise.video_url,
-        )
-    elif copy.deleted_at is not None:
-        copy.deleted_at = None
-        copy.version += 1
-        copy.save()
-    return str(copy.id)
-
-
-def _plan_for_student(content: dict, coach, student) -> dict:
-    plan = {"weeks": []}
-    for week in content["weeks"]:
-        days = []
-        for day in week["days"]:
-            exercises = [{**p, "exercise_id": _exercise_for_student(p["exercise_id"], coach, student)} for p in day["exercises"]]
-            days.append({**day, "exercises": exercises})
-        plan["weeks"].append({**week, "days": days})
-    return plan
-
-
 def _apply_source(assignment: RoutineAssignment, source: Routine, *, coach) -> None:
     """Brings the student's routine up to the coach's latest version (header + plan)."""
     student_routine = assignment.student_routine
     student = student_routine.owner
     latest = source.latest_version
-    plan = _plan_for_student(latest.content, coach, student)
+    plan = plan_for_owner(latest.content, student)
     current = student_routine.latest_version
     if current is None or current.content != plan:
         number = (student_routine.versions.aggregate(n=Max("number"))["n"] or 0) + 1

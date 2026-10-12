@@ -96,4 +96,5 @@ class VersionOrigin(models.TextChoices):
     OWNER_EDIT = "owner_edit", "Edición del propietario"
     COACH_UPDATE = "coach_update", "Actualización del entrenador"
     COPY = "copy", "Copia"
+    SHARED_EDIT = "shared_edit", "Edición de una persona invitada"
     MIGRATION = "migration", "Migración desde el dispositivo"

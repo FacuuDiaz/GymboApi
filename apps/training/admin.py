@@ -5,8 +5,8 @@ from .models import BodyMeasurement, Exercise, Routine, RoutineVersion, WorkoutS
 
 @admin.register(Exercise)
 class ExerciseAdmin(admin.ModelAdmin):
-    list_display = ("name", "is_builtin", "owner", "visibility", "deleted_at")
-    list_filter = ("is_builtin", "visibility", "primary_muscle")
+    list_display = ("name", "is_builtin", "owner", "visibility", "moderation_status", "deleted_at")
+    list_filter = ("is_builtin", "visibility", "moderation_status", "primary_muscle")
     search_fields = ("name", "slug")
 
 
@@ -20,8 +20,8 @@ class RoutineVersionInline(admin.TabularInline):
 
 @admin.register(Routine)
 class RoutineAdmin(admin.ModelAdmin):
-    list_display = ("name", "owner", "is_active", "visibility", "updated_at")
-    list_filter = ("visibility", "is_active")
+    list_display = ("name", "owner", "is_active", "visibility", "moderation_status", "updated_at")
+    list_filter = ("visibility", "moderation_status", "is_active")
     inlines = [RoutineVersionInline]
 
 

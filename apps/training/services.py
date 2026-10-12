@@ -80,6 +80,53 @@ def resolve_exercise(ref: str, user, *, allow_deleted: bool = False) -> Exercise
     return qs.filter(id=exercise_id).first()
 
 
+def _find_exercise(ref: str) -> Exercise | None:
+    """Unrestricted lookup, only for references already validated inside someone's plan."""
+    try:
+        return Exercise.objects.filter(id=uuid.UUID(str(ref))).first()
+    except ValueError:
+        return Exercise.objects.filter(slug=ref).first()
+
+
+def exercise_ref_for(new_owner, ref: str) -> str:
+    """
+    The reference `new_owner` should use for an exercise that appears in a plan
+    they receive (assigned by a coach, or copied from someone else).
+    Built-ins and the user's own exercises are kept. Anyone else's exercise —
+    private or published — is copied once into the user's account, so their
+    app has it offline and it never breaks if the author edits or deletes it.
+    """
+    exercise = _find_exercise(ref)
+    if exercise is None or exercise.is_builtin or exercise.owner_id == new_owner.pk:
+        return ref
+    copy = Exercise.objects.filter(owner=new_owner, copied_from=exercise).first()
+    if copy is None:
+        copy = Exercise.objects.create(
+            owner=new_owner, copied_from=exercise, name=exercise.name, primary_muscle=exercise.primary_muscle,
+            secondary_muscles=exercise.secondary_muscles, equipment=exercise.equipment, category=exercise.category,
+            modality=exercise.modality, description=exercise.description, instructions=exercise.instructions,
+            video_url=exercise.video_url,
+        )
+    elif copy.deleted_at is not None:
+        copy.deleted_at = None
+        copy.version += 1
+        copy.save()
+    return str(copy.id)
+
+
+def plan_for_owner(content: dict, new_owner) -> dict:
+    """A plan with every exercise reference rewritten for `new_owner` (see exercise_ref_for)."""
+    return {
+        "weeks": [
+            {**week, "days": [
+                {**day, "exercises": [{**p, "exercise_id": exercise_ref_for(new_owner, p["exercise_id"])} for p in day["exercises"]]}
+                for day in week["days"]
+            ]}
+            for week in content["weeks"]
+        ]
+    }
+
+
 # ── Routines ─────────────────────────────────────────────────────────────────
 
 def normalize_plan(content: dict, planning_mode: str, user) -> dict:

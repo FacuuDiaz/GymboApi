@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     "apps.accounts",
     "apps.training",
     "apps.coaching",
+    "apps.sharing",
 ]
 
 MIDDLEWARE = [
@@ -159,6 +160,10 @@ SPECTACULAR_SETTINGS = {
         "SessionStatusEnum": "apps.training.choices.SessionStatus",
         "RelationshipStatusEnum": "apps.coaching.models.CoachingRelationship.Status",
         "AssignmentStatusEnum": "apps.coaching.models.RoutineAssignment.Status",
+        "ShareRoleEnum": "apps.sharing.models.ShareRole",
+        "LinkRoleEnum": "apps.sharing.models.LinkRole",
+        "ReportKindEnum": "apps.sharing.models.ContentReport.Kind",
+        "MeasurementKindEnum": "apps.training.choices.MeasurementKind",
     },
     "SERVE_PERMISSIONS": ["rest_framework.permissions.AllowAny"],
     "SERVE_AUTHENTICATION": ["rest_framework.authentication.SessionAuthentication"],
