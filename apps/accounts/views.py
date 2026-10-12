@@ -142,20 +142,25 @@ class RefreshView(PublicAuthView):
             )
 
 
-class LogoutView(APIView):
-    """Revokes one refresh token (this device). Idempotent."""
+class LogoutView(PublicAuthView):
+    """
+    Revokes one refresh token (this device). Holding the refresh token is the
+    proof of authorization — like OAuth token revocation (RFC 7009) — so no
+    access token is needed. That avoids a race: obtaining an access token can
+    rotate the refresh token the client is about to revoke. Idempotent.
+    """
 
-    @extend_schema(request=RefreshSerializer, responses={204: None}, tags=["auth"])
+    @extend_schema(request=RefreshSerializer, responses={204: None, 401: OpenApiResponse(description="token_invalid")}, tags=["auth"])
     def post(self, request):
         serializer = RefreshSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         raw = serializer.validated_data["refresh"]
         try:
-            payload = token_backend.decode(raw, verify=True)
+            payload = token_backend.decode(raw, verify=True)  # signature + expiry
         except Exception:
             raise AuthenticationFailed("Token de sesión inválido.", code="token_invalid")
-        if str(payload.get(jwt_settings.USER_ID_CLAIM)) != str(request.user.pk):
-            raise PermissionDenied("Ese token no pertenece a tu sesión.")
+        if payload.get(jwt_settings.TOKEN_TYPE_CLAIM) != "refresh":
+            raise AuthenticationFailed("Token de sesión inválido.", code="token_invalid")
         try:
             RefreshToken(raw).blacklist()
         except TokenError:

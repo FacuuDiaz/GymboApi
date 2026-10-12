@@ -130,7 +130,7 @@ def test_google_only_account_cannot_log_in_with_a_password(api):
 # ── Protected endpoints and access tokens ───────────────────────────────────
 
 def test_private_endpoints_require_a_valid_access_token(api, make_user):
-    for path, method in [(ME, "get"), (LOGOUT_ALL, "post"), (CHANGE_PASSWORD, "post"), ("/api/v1/auth/google/link/", "post")]:
+    for path, method in [(ME, "get"), (LOGOUT_ALL, "post"), (CHANGE_PASSWORD, "post"), ("/api/v1/auth/google/link/", "post"), ("/api/v1/auth/google/unlink/", "post")]:
         assert getattr(api, method)(path).status_code == 401
     bearer(api, "basura.no.es.un.jwt")
     assert api.get(ME).status_code == 401
@@ -194,18 +194,30 @@ def test_refresh_for_deactivated_user_is_rejected(api, make_user):
 
 # ── Logout ──────────────────────────────────────────────────────────────────
 
-def test_logout_revokes_that_refresh_token_and_is_idempotent(auth_client, api):
-    client, user, tokens = auth_client()
-    assert client.post(LOGOUT, {"refresh": tokens["refresh"]}, format="json").status_code == 204
-    assert client.post(LOGOUT, {"refresh": tokens["refresh"]}, format="json").status_code == 204
-    assert api.post(REFRESH, {"refresh": tokens["refresh"]}, format="json").status_code == 401
+def test_logout_revokes_that_refresh_token_and_is_idempotent(api, make_user):
+    refresh = str(RefreshToken.for_user(make_user()))
+    # No access token needed: holding the refresh token is the authorization.
+    assert api.post(LOGOUT, {"refresh": refresh}, format="json").status_code == 204
+    assert api.post(LOGOUT, {"refresh": refresh}, format="json").status_code == 204
+    assert api.post(REFRESH, {"refresh": refresh}, format="json").status_code == 401
 
 
-def test_cannot_log_out_someone_elses_session(auth_client, make_user, api):
-    client, _, _ = auth_client()
-    victim_refresh = str(RefreshToken.for_user(make_user()))
-    assert client.post(LOGOUT, {"refresh": victim_refresh}, format="json").status_code == 403
-    assert api.post(REFRESH, {"refresh": victim_refresh}, format="json").status_code == 200
+def test_logout_only_revokes_the_given_session(api, make_user):
+    user = make_user()
+    this_device, other_device = str(RefreshToken.for_user(user)), str(RefreshToken.for_user(user))
+    api.post(LOGOUT, {"refresh": this_device}, format="json")
+    assert api.post(REFRESH, {"refresh": other_device}, format="json").status_code == 200
+
+
+@pytest.mark.parametrize("bad", ["", "basura.no.jwt"])
+def test_logout_rejects_invalid_tokens(api, bad):
+    assert api.post(LOGOUT, {"refresh": bad}, format="json").status_code in (400, 401)
+
+
+def test_logout_rejects_an_access_token_in_place_of_a_refresh(api, make_user):
+    access = str(AccessToken.for_user(make_user()))
+    response = api.post(LOGOUT, {"refresh": access}, format="json")
+    assert response.status_code == 401
 
 
 def test_logout_all_revokes_refresh_and_access_tokens_immediately(api, make_user):

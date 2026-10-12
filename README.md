@@ -184,7 +184,7 @@ Todas bajo `/api/v1/`. Los errores siempre tienen la forma `{"error": {"code", "
 | `POST auth/register/` | — | `username`, `email` y `password` obligatorios. Opcionales: `first_name`, `last_name`, `phone`, `gender`, `birth_date`. Devuelve `{access, refresh, user}`. |
 | `POST auth/login/` | — | `{login, password}`; `login` puede ser el username o el email. Ante un fallo, la respuesta es la misma sea cual sea la causa (`invalid_credentials`). |
 | `POST auth/refresh/` | — | `{refresh}` devuelve un par nuevo. El refresh usado queda revocado. |
-| `POST auth/logout/` | Bearer | `{refresh}`: revoca la sesión de este dispositivo. Es idempotente. |
+| `POST auth/logout/` | — | `{refresh}`: revoca la sesión de este dispositivo. Tener el refresh token alcanza como autorización (como la revocación de OAuth, RFC 7009), así que no hace falta un access token. Es idempotente. |
 | `POST auth/logout-all/` | Bearer | Revoca **todas** las sesiones, y los access tokens quedan inválidos en el momento. |
 | `POST auth/google/` | — | `{id_token}` de Google. Responde 201 si crea una cuenta y 200 si ya existía. |
 | `POST auth/google/link/` | Bearer | Vincula Google a la cuenta actual. |
