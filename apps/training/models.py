@@ -62,6 +62,9 @@ class Exercise(models.Model):
     instructions = models.TextField(blank=True, max_length=4000)
     video_url = models.URLField(blank=True, max_length=500)
     visibility = models.CharField(max_length=8, choices=ExerciseVisibility.choices, default=ExerciseVisibility.PRIVATE)
+    # Set on a user's copy of someone else's private exercise (received with an
+    # assigned or copied routine), so it is copied once per user, not every time.
+    copied_from = models.ForeignKey("self", on_delete=models.SET_NULL, null=True, blank=True, related_name="copies")
     version = models.PositiveIntegerField(default=1)
     deleted_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -69,6 +72,7 @@ class Exercise(models.Model):
 
     class Meta:
         constraints = [
+            models.UniqueConstraint(fields=["owner", "copied_from"], name="exercise_one_copy_per_owner"),
             # Built-ins have a slug and no owner; user exercises have no slug.
             models.CheckConstraint(
                 condition=Q(is_builtin=True, owner__isnull=True, slug__isnull=False) | Q(is_builtin=False, slug__isnull=True),

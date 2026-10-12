@@ -15,7 +15,7 @@ La app móvil nunca se conecta a PostgreSQL: solo habla con esta API.
 | Perfil propio (`/users/me/`), cambio de contraseña | ✅ Implementado y probado |
 | Ejercicios, rutinas y versiones, sesiones, mediciones, preferencias y progreso (API) | ✅ Implementado y probado |
 | Sincronización y migración invitado → cuenta | ⏳ Etapa 5 |
-| Entrenadores y alumnos | ⏳ Etapa 6 |
+| Entrenadores y alumnos (invitaciones, permisos, grupos, asignaciones con actualización automática) | ✅ Implementado y probado |
 | Compartición y comunidad | ⏳ Etapa 7 |
 | Exportación y borrado de cuenta | ⏳ Etapa 8 |
 
@@ -262,6 +262,45 @@ Todas bajo `/api/v1/` y con `Authorization: Bearer <access>`. Cada endpoint solo
   - Cada sesión guarda la unidad de sus pesos (`kg` o `lb`). Si está vacía, se asume la unidad preferida del usuario.
   - El progreso convierte todo a la unidad pedida.
   - Las fórmulas son las mismas que en la app: 1RM de Epley con un tope de 15 reps; solo cuentan las series completadas con peso y reps.
+
+## Entrenadores y alumnos
+
+Una misma cuenta puede ser alumna de varios entrenadores y entrenar a muchos alumnos. Los roles salen de **relaciones explícitas**, no de un campo del usuario.
+
+| Endpoint | Quién | Qué hace |
+|---|---|---|
+| `POST coaching/relationships/invite/` | Entrenador | `{username, message?}` crea una invitación pendiente (vence a los 14 días) |
+| `GET coaching/relationships/` | Ambos | Filtros `role=coach\|student` y `status`. Cada relación indica tu `role` |
+| `POST coaching/relationships/{id}/accept/` | Alumno | `{progress, sessions, measurements}`: qué autoriza a ver. Por defecto, **nada** |
+| `POST …/reject/` | Alumno | Rechaza la invitación |
+| `POST …/end/` | Ambos | Termina la relación (o cancela una invitación) |
+| `PATCH coaching/relationships/{id}/` | Alumno: `permissions`; entrenador: `group` | |
+| `GET …/progress/weekly/`, `…/progress/exercises/{id}/` | Entrenador | Solo con permiso `progress` |
+| `GET …/sessions/` | Entrenador | Solo con permiso `sessions` |
+| `GET …/measurements/` | Entrenador | Solo con permiso `measurements` |
+| `coaching/groups/` | Entrenador | Grupos propios (horario, gimnasio…). El alumno no los ve |
+| `POST coaching/assignments/` | Entrenador | `{relationship, routine, can_edit_plan?}` |
+| `PATCH coaching/assignments/{id}/` | Entrenador | `{can_edit_plan}` |
+| `POST coaching/assignments/{id}/end/` | Ambos | Finaliza la asignación |
+
+**Reglas:**
+- **Privacidad:**
+  - Antes de aceptar, el entrenador no ve nada.
+  - Después ve solo lo que el alumno autorizó, y solo el alumno puede cambiar esos permisos.
+  - El entrenador nunca recibe el email ni otros datos personales del alumno: solo su username y su nombre.
+- **Asignar** le crea al alumno **su propia** rutina (`attribution: "Asignada por @…"`; `assignment` en la representación de la rutina).
+- **Ejercicios privados del entrenador:** si la rutina los usa, se copian una vez a la cuenta del alumno, para que pueda verlos y registrar entrenamientos con ellos.
+- **Actualización automática (D5):**
+  - Cada cambio del entrenador en su rutina se aplica a todas sus asignaciones activas, como versión nueva con `origin: coach_update`.
+  - Gana el entrenador; lo que había editado el alumno queda en el historial de versiones.
+  - Las sesiones pasadas no cambian: siguen apuntando a la versión con la que se entrenaron.
+- **Sin `can_edit_plan`:**
+  - El alumno entrena con la rutina, la activa o archiva y mueve días, pero no puede cambiar el plan, el nombre ni el objetivo (403 `plan_locked`).
+  - Tampoco puede borrarla mientras la asignación siga activa.
+- **Al terminar la relación o la asignación:**
+  - Los permisos caen en el momento.
+  - El alumno conserva la rutina como propia (desbloqueada) y todo su historial.
+  - Los cambios posteriores del entrenador ya no le llegan.
 
 ## Producción
 

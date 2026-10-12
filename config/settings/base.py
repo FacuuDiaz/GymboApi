@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     "apps.common",
     "apps.accounts",
     "apps.training",
+    "apps.coaching",
 ]
 
 MIDDLEWARE = [
@@ -153,7 +154,12 @@ SPECTACULAR_SETTINGS = {
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
     "SCHEMA_PATH_PREFIX": "/api/v1",
-    "ENUM_NAME_OVERRIDES": {"MuscleGroupEnum": "apps.training.choices.MuscleGroup"},
+    "ENUM_NAME_OVERRIDES": {
+        "MuscleGroupEnum": "apps.training.choices.MuscleGroup",
+        "SessionStatusEnum": "apps.training.choices.SessionStatus",
+        "RelationshipStatusEnum": "apps.coaching.models.CoachingRelationship.Status",
+        "AssignmentStatusEnum": "apps.coaching.models.RoutineAssignment.Status",
+    },
     "SERVE_PERMISSIONS": ["rest_framework.permissions.AllowAny"],
     "SERVE_AUTHENTICATION": ["rest_framework.authentication.SessionAuthentication"],
 }

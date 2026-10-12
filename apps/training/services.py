@@ -146,16 +146,25 @@ def update_routine(user, routine_id, data: dict, represent) -> Routine:
     Partial update with optimistic concurrency. A changed plan creates a new
     immutable RoutineVersion: sessions keep pointing at the version they used.
     """
+    from apps.coaching.services import check_student_edit, propagate_routine_update
+
     routine = Routine.objects.select_for_update().filter(owner=user, id=routine_id, deleted_at__isnull=True).first()
     if routine is None:
         raise exceptions.NotFound()
     check_base_version(routine, data.pop("base_version", None), represent)
 
     plan = data.pop("plan", None)
+    latest = routine.latest_version
     if plan is not None:
-        mode = data.get("planning_mode", routine.planning_mode)
-        plan = normalize_plan(plan, mode, user)
-        latest = routine.latest_version
+        plan = normalize_plan(plan, data.get("planning_mode", routine.planning_mode), user)
+    # Clients send the whole routine; only fields whose value really changes count
+    # (a student may activate an assigned routine without "editing" it).
+    changed = [f for f, v in data.items() if hasattr(routine, f) and getattr(routine, f) != v]
+    if plan is not None and (latest is None or latest.content != plan):
+        changed.append("plan")
+    check_student_edit(user, routine, changed)
+
+    if plan is not None:
         if latest is None or latest.content != plan:
             next_number = (routine.versions.aggregate(n=Max("number"))["n"] or 0) + 1
             RoutineVersion.objects.create(routine=routine, number=next_number, content=plan, created_by=user, origin="owner_edit")
@@ -172,17 +181,22 @@ def update_routine(user, routine_id, data: dict, represent) -> Routine:
         setattr(routine, field, value)
     routine.version += 1
     routine.save()
+    # Students this routine is assigned to follow every change automatically (D5).
+    propagate_routine_update(routine)
     return routine
 
 
 @transaction.atomic
 def delete_routine(user, routine_id, base_version, represent) -> None:
     """Tombstone: the routine disappears from lists; its versions and the sessions that used them remain."""
+    from apps.coaching.services import check_student_delete
+
     routine = Routine.objects.select_for_update().filter(owner=user, id=routine_id, deleted_at__isnull=True).first()
     if routine is None:
         raise exceptions.NotFound()
     if base_version is not None and routine.version != base_version:
         raise VersionConflict(represent(routine))
+    check_student_delete(user, routine)
     routine.deleted_at = timezone.now()
     routine.is_active = False
     routine.version += 1

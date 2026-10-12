@@ -88,14 +88,28 @@ class RoutineSerializer(serializers.ModelSerializer):
     plan = serializers.SerializerMethodField()
     plan_version = serializers.SerializerMethodField()
     date_overrides = serializers.SerializerMethodField()
+    assignment = serializers.SerializerMethodField()
 
     class Meta:
         model = Routine
         fields = [
             "id", "name", "goal", "duration_weeks", "planning_mode", "is_active", "start_date", "archived_at",
-            "visibility", "attribution", "date_overrides", "plan", "plan_version", "version", "created_at",
-            "updated_at", "deleted_at",
+            "visibility", "attribution", "assignment", "date_overrides", "plan", "plan_version", "version",
+            "created_at", "updated_at", "deleted_at",
         ]
+
+    def get_assignment(self, routine) -> dict | None:
+        """Set when a coach assigned this routine: the app locks plan editing unless can_edit_plan."""
+        from apps.coaching.services import active_assignment_of
+
+        assignment = active_assignment_of(routine)
+        if assignment is None:
+            return None
+        return {
+            "id": str(assignment.id),
+            "coach_username": assignment.relationship.coach.username,
+            "can_edit_plan": assignment.can_edit_plan,
+        }
         read_only_fields = fields
 
     def _latest(self, routine):
