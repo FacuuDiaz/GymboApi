@@ -1,0 +1,88 @@
+# Development environment: `docker compose up --build`
+# Production uses compose.prod.yaml instead (see README.md).
+name: gymbo-api
+
+x-api-env: &api-env
+  DJANGO_SETTINGS_MODULE: ${DJANGO_SETTINGS_MODULE:-config.settings.development}
+  DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?Set DJANGO_SECRET_KEY in .env}
+  DJANGO_DEBUG: ${DJANGO_DEBUG:-true}
+  DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1,10.0.2.2}
+  DJANGO_MIGRATE_ON_START: ${DJANGO_MIGRATE_ON_START:-false}
+  # The API reaches PostgreSQL by its service name on the private network.
+  POSTGRES_HOST: db
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: ${POSTGRES_DB:?Set POSTGRES_DB in .env}
+  POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER in .env}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+  DATABASE_SSLMODE: ${DATABASE_SSLMODE:-disable}
+  JWT_ACCESS_MINUTES: ${JWT_ACCESS_MINUTES:-10}
+  JWT_REFRESH_DAYS: ${JWT_REFRESH_DAYS:-30}
+  GOOGLE_OAUTH_CLIENT_IDS: ${GOOGLE_OAUTH_CLIENT_IDS:-}
+  THROTTLE_ANON: ${THROTTLE_ANON:-60/min}
+  THROTTLE_USER: ${THROTTLE_USER:-600/min}
+  THROTTLE_AUTH: ${THROTTLE_AUTH:-10/min}
+  THROTTLE_LOGIN_IDENTIFIER: ${THROTTLE_LOGIN_IDENTIFIER:-5/min}
+  LOG_LEVEL: ${LOG_LEVEL:-INFO}
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      # Superuser: administration only. The API never uses it.
+      POSTGRES_USER: ${POSTGRES_SUPERUSER:?Set POSTGRES_SUPERUSER in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD:?Set POSTGRES_SUPERUSER_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB}
+      # Least-privilege role the API connects with (created by docker/postgres/initdb).
+      APP_DB_USER: ${POSTGRES_USER}
+      APP_DB_PASSWORD: ${POSTGRES_PASSWORD}
+      APP_DB_CREATEDB: ${POSTGRES_APP_CREATEDB:-true}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/postgres/initdb:/docker-entrypoint-initdb.d:ro
+    # No `ports:` on purpose — PostgreSQL is reachable only on the private
+    # network. For temporary admin access from the host see compose.db-port.yaml.
+    healthcheck:
+      # TCP (-h 127.0.0.1) so it only passes after the init scripts finished
+      # (during init the server listens on the Unix socket only).
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+    networks: [backend]
+
+  api:
+    build:
+      context: .
+      target: dev
+      args:
+        APP_UID: ${APP_UID:-1000}
+        APP_GID: ${APP_GID:-1000}
+    environment: *api-env
+    ports:
+      # 127.0.0.1 by default (reachable from the host and the Android emulator
+      # via 10.0.2.2). Set API_BIND=0.0.0.0 to reach it from a phone on the LAN.
+      - "${API_BIND:-127.0.0.1}:${API_PORT:-8000}:8000"
+    volumes:
+      # Source code for autoreload. Dependencies live in /opt/venv inside the
+      # image, so this mount does not hide them.
+      - ./:/app
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "/app/docker/healthcheck.py"]
+      interval: 15s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+    restart: unless-stopped
+    networks: [backend]
+
+volumes:
+  # Named volume: survives `docker compose down` and container rebuilds.
+  # Only `docker compose down -v` (or `docker volume rm`) deletes it.
+  pgdata:
+
+networks:
+  backend:

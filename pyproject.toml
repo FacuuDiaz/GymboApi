@@ -9,7 +9,11 @@ dependencies = [
     "djangorestframework>=3.18.3",
     "djangorestframework-simplejwt>=5.5.1",
     "drf-spectacular>=0.30.0",
+    "google-auth>=2.61.0",
+    "gunicorn>=26.2.0",
     "psycopg[binary]>=3.3.6",
+    "requests>=2.34.2",
+    "whitenoise>=6.12.0",
 ]
 
 [dependency-groups]
@@ -19,6 +23,5 @@ dev = [
 ]
 
 [tool.pytest.ini_options]
-DJANGO_SETTINGS_MODULE = "gymbo_api.settings"
 python_files = ["test_*.py"]
-addopts = "--strict-markers -q"
+addopts = "--ds=config.settings.test --strict-markers -q"

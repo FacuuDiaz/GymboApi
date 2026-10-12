@@ -1,0 +1,7 @@
+# OPT-IN, development only: publishes PostgreSQL on the host's loopback for
+# GUI tools. Never use in production.
+#   docker compose -f compose.yaml -f compose.db-port.yaml up -d
+services:
+  db:
+    ports:
+      - "127.0.0.1:${DB_HOST_PORT:-5434}:5432"

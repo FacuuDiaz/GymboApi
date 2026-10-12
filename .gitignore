@@ -17,3 +17,6 @@ staticfiles/
 *.sql.gz
 
 .DS_Store
+
+# Local backups
+backups/

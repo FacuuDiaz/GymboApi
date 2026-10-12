@@ -1,0 +1,76 @@
+# Production on a Linux server with Docker:
+#   docker compose -f compose.prod.yaml --env-file /etc/gymbo/api.env up -d --build
+#
+# - HTTPS is terminated by a reverse proxy on the host (Caddy/nginx/Traefik)
+#   that forwards to 127.0.0.1:8000. The API port is not published publicly.
+# - PostgreSQL is EXTERNAL by default (DATABASE_URL). To run it on the same
+#   server instead, add `--profile local-db` and set the POSTGRES_* variables.
+name: gymbo-api-prod
+
+services:
+  api:
+    build:
+      context: .
+      target: prod
+    image: gymbo-api:${IMAGE_TAG:-latest}
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.production
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?required}
+      DJANGO_DEBUG: "false"
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:?required}
+      DJANGO_CSRF_TRUSTED_ORIGINS: ${DJANGO_CSRF_TRUSTED_ORIGINS:-}
+      DJANGO_ADMIN_URL: ${DJANGO_ADMIN_URL:?required}
+      DJANGO_NUM_PROXIES: ${DJANGO_NUM_PROXIES:-1}
+      DJANGO_MIGRATE_ON_START: "false"
+      DATABASE_URL: ${DATABASE_URL:-}
+      POSTGRES_HOST: ${POSTGRES_HOST:-}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      POSTGRES_DB: ${POSTGRES_DB:-}
+      POSTGRES_USER: ${POSTGRES_USER:-}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}
+      DATABASE_SSLMODE: ${DATABASE_SSLMODE:?required (require, verify-ca or verify-full)}
+      JWT_SIGNING_KEY: ${JWT_SIGNING_KEY:-}
+      JWT_ACCESS_MINUTES: ${JWT_ACCESS_MINUTES:-10}
+      JWT_REFRESH_DAYS: ${JWT_REFRESH_DAYS:-30}
+      GOOGLE_OAUTH_CLIENT_IDS: ${GOOGLE_OAUTH_CLIENT_IDS:-}
+      WEB_CONCURRENCY: ${WEB_CONCURRENCY:-3}
+      FORWARDED_ALLOW_IPS: ${FORWARDED_ALLOW_IPS:-*}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    ports:
+      - "127.0.0.1:${API_PORT:-8000}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+        required: false
+    restart: unless-stopped
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: ["no-new-privileges:true"]
+    networks: [backend]
+
+  db:
+    profiles: [local-db]
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_SUPERUSER:-}
+      POSTGRES_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD:-}
+      POSTGRES_DB: ${POSTGRES_DB:-}
+      APP_DB_USER: ${POSTGRES_USER:-}
+      APP_DB_PASSWORD: ${POSTGRES_PASSWORD:-}
+      APP_DB_CREATEDB: "false"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/postgres/initdb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    networks: [backend]
+
+volumes:
+  pgdata:
+
+networks:
+  backend:
