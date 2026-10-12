@@ -1,0 +1,19 @@
+# Secrets: never commit a real .env
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.coverage
+htmlcov/
+staticfiles/
+
+# Backups / dumps
+*.dump
+*.sql.gz
+
+.DS_Store

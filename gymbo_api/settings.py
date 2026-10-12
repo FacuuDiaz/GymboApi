@@ -146,7 +146,7 @@ SIMPLE_JWT = {
 
 SPECTACULAR_SETTINGS = {
     "TITLE": "Gymbo API",
-    "DESCRIPTION": "API REST de Gymbo. Ver docs/backend.md.",
+    "DESCRIPTION": "API REST de Gymbo. Ver README.md del repositorio GymboAPI.",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
     "SCHEMA_PATH_PREFIX": "/api/v1",

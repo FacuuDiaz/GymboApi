@@ -1,5 +1,8 @@
 # Development-only PostgreSQL. Production uses an external, managed server
-# configured through DATABASE_URL (see docs/backend.md).
+# configured through DATABASE_URL (see README.md).
+
+# Fixed project name so the container and volume names do not depend on the folder name.
+name: gymbo-api
 services:
   db:
     image: postgres:17-alpine

@@ -7,7 +7,7 @@ from pathlib import Path
 BUILTIN_NAMESPACE = uuid.UUID("6f3c1f1e-8a1d-4b6e-9a57-0c9d5c2b7e41")
 
 # Generated from the app's src/constants/exerciseLibrary.ts by
-# scripts/export-exercise-library.js — do not edit by hand.
+# scripts/export-exercise-library.js in the Gymbo (app) repo — do not edit by hand.
 BUILTIN_DATA_PATH = Path(__file__).resolve().parent / "data" / "builtin_exercises.json"
 
 BUILTIN_FIELDS = ("name", "primary_muscle", "secondary_muscles", "equipment", "category", "modality", "description", "video_url")
