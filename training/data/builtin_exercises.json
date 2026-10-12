@@ -1,0 +1,773 @@
+[
+  {
+    "slug": "chest-bench-press",
+    "name": "Press banca",
+    "primary_muscle": "chest",
+    "secondary_muscles": [
+      "triceps",
+      "shoulders"
+    ],
+    "equipment": "barbell",
+    "category": "compound",
+    "modality": "free_weight",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-barbell-bench-press-front.mp4"
+  },
+  {
+    "slug": "chest-incline-press",
+    "name": "Press inclinado",
+    "primary_muscle": "chest",
+    "secondary_muscles": [
+      "triceps",
+      "shoulders"
+    ],
+    "equipment": "barbell",
+    "category": "compound",
+    "modality": "free_weight",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-Barbell-barbell-incline-bench-press-front.mp4"
+  },
+  {
+    "slug": "chest-decline-press",
+    "name": "Press declinado",
+    "primary_muscle": "chest",
+    "secondary_muscles": [
+      "triceps"
+    ],
+    "equipment": "barbell",
+    "category": "compound",
+    "modality": "free_weight",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-dumbbell-decline-bench-press-front.mp4"
+  },
+  {
+    "slug": "chest-dumbbell-press",
+    "name": "Press mancuernas",
+    "primary_muscle": "chest",
+    "secondary_muscles": [
+      "triceps",
+      "shoulders"
+    ],
+    "equipment": "dumbbell",
+    "category": "compound",
+    "modality": "free_weight",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-dumbbell-bench-press-front_y8zKZJl.mp4"
+  },
+  {
+    "slug": "chest-dumbbell-fly",
+    "name": "Apertura mancuernas",
+    "primary_muscle": "chest",
+    "secondary_muscles": [],
+    "equipment": "dumbbell",
+    "category": "isolation",
+    "modality": "free_weight",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-dumbbell-chest-fly-front.mp4"
+  },
+  {
+    "slug": "chest-cable-fly",
+    "name": "Aperturas polea",
+    "primary_muscle": "chest",
+    "secondary_muscles": [],
+    "equipment": "cable",
+    "category": "isolation",
+    "modality": "machine",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-cable-pec-fly-front.mp4"
+  },
+  {
+    "slug": "chest-dips",
+    "name": "Fondos",
+    "primary_muscle": "chest",
+    "secondary_muscles": [
+      "triceps",
+      "shoulders"
+    ],
+    "equipment": "bodyweight",
+    "category": "compound",
+    "modality": "bodyweight",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-Bodyweight-parralel-bar-dips-front.mp4"
+  },
+  {
+    "slug": "chest-machine-press",
+    "name": "Press máquina",
+    "primary_muscle": "chest",
+    "secondary_muscles": [
+      "triceps"
+    ],
+    "equipment": "machine",
+    "category": "compound",
+    "modality": "machine",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-Machine-machine-chest-press-front.mp4"
+  },
+  {
+    "slug": "back-pull-ups",
+    "name": "Dominadas",
+    "primary_muscle": "back",
+    "secondary_muscles": [
+      "biceps"
+    ],
+    "equipment": "bodyweight",
+    "category": "compound",
+    "modality": "bodyweight",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-bodyweight-pullup-front.mp4"
+  },
+  {
+    "slug": "back-lat-pulldown",
+    "name": "Jalón al pecho",
+    "primary_muscle": "back",
+    "secondary_muscles": [
+      "biceps"
+    ],
+    "equipment": "cable",
+    "category": "compound",
+    "modality": "machine",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-machine-pulldown-front.mp4"
+  },
+  {
+    "slug": "back-barbell-row",
+    "name": "Remo con barra",
+    "primary_muscle": "back",
+    "secondary_muscles": [
+      "biceps"
+    ],
+    "equipment": "barbell",
+    "category": "compound",
+    "modality": "free_weight",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-barbell-bent-over-row-front.mp4"
+  },
+  {
+    "slug": "back-dumbbell-row",
+    "name": "Remo mancuerna",
+    "primary_muscle": "back",
+    "secondary_muscles": [
+      "biceps"
+    ],
+    "equipment": "dumbbell",
+    "category": "compound",
+    "modality": "free_weight",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-Dumbbells-dumbbell-single-arm-row-front.mp4"
+  },
+  {
+    "slug": "back-machine-row",
+    "name": "Remo máquina",
+    "primary_muscle": "back",
+    "secondary_muscles": [
+      "biceps"
+    ],
+    "equipment": "machine",
+    "category": "compound",
+    "modality": "machine",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-Machine-machine-underhand-row-front.mp4"
+  },
+  {
+    "slug": "back-cable-row",
+    "name": "Remo polea",
+    "primary_muscle": "back",
+    "secondary_muscles": [
+      "biceps"
+    ],
+    "equipment": "cable",
+    "category": "compound",
+    "modality": "machine",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-machine-seated-cable-row-front.mp4"
+  },
+  {
+    "slug": "back-cable-pullover",
+    "name": "Pullover polea",
+    "primary_muscle": "back",
+    "secondary_muscles": [
+      "chest"
+    ],
+    "equipment": "cable",
+    "category": "isolation",
+    "modality": "machine",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-Cables-cable-rope-pullover-front.mp4"
+  },
+  {
+    "slug": "back-deadlift",
+    "name": "Peso muerto",
+    "primary_muscle": "back",
+    "secondary_muscles": [
+      "hamstrings",
+      "glutes"
+    ],
+    "equipment": "barbell",
+    "category": "compound",
+    "modality": "free_weight",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-Barbell-barbell-deadlift-front.mp4"
+  },
+  {
+    "slug": "back-t-bar-row",
+    "name": "Remo T",
+    "primary_muscle": "back",
+    "secondary_muscles": [
+      "biceps"
+    ],
+    "equipment": "barbell",
+    "category": "compound",
+    "modality": "free_weight",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-Barbell-landmine-t-bar-rows-front.mp4"
+  },
+  {
+    "slug": "back-face-pull",
+    "name": "Face pull",
+    "primary_muscle": "back",
+    "secondary_muscles": [
+      "shoulders"
+    ],
+    "equipment": "cable",
+    "category": "isolation",
+    "modality": "machine",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-Machine-machine-face-pulls-front.mp4"
+  },
+  {
+    "slug": "shoulders-overhead-press",
+    "name": "Press militar",
+    "primary_muscle": "shoulders",
+    "secondary_muscles": [
+      "triceps"
+    ],
+    "equipment": "barbell",
+    "category": "compound",
+    "modality": "free_weight",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-Barbell-barbell-overhead-press-front.mp4"
+  },
+  {
+    "slug": "shoulders-dumbbell-press",
+    "name": "Press mancuerna",
+    "primary_muscle": "shoulders",
+    "secondary_muscles": [
+      "triceps"
+    ],
+    "equipment": "dumbbell",
+    "category": "compound",
+    "modality": "free_weight",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-Dumbbells-dumbbell-overhead-press-front.mp4"
+  },
+  {
+    "slug": "shoulders-lateral-raise",
+    "name": "Elevaciones laterales",
+    "primary_muscle": "shoulders",
+    "secondary_muscles": [],
+    "equipment": "dumbbell",
+    "category": "isolation",
+    "modality": "free_weight",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-Dumbbells-dumbbell-lateral-raise-front.mp4"
+  },
+  {
+    "slug": "shoulders-front-raise",
+    "name": "Elevaciones frontales",
+    "primary_muscle": "shoulders",
+    "secondary_muscles": [],
+    "equipment": "dumbbell",
+    "category": "isolation",
+    "modality": "free_weight",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-Dumbbells-dumbbell-front-raise-front.mp4"
+  },
+  {
+    "slug": "shoulders-bent-over-raise",
+    "name": "Pájaros",
+    "primary_muscle": "shoulders",
+    "secondary_muscles": [
+      "back"
+    ],
+    "equipment": "dumbbell",
+    "category": "isolation",
+    "modality": "free_weight",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-Dumbbells-dumbbell-laying-reverse-fly-front.mp4"
+  },
+  {
+    "slug": "shoulders-reverse-fly",
+    "name": "Reverse fly",
+    "primary_muscle": "shoulders",
+    "secondary_muscles": [
+      "back"
+    ],
+    "equipment": "machine",
+    "category": "isolation",
+    "modality": "machine",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-Machine-machine-reverse-fly-front.mp4"
+  },
+  {
+    "slug": "biceps-barbell-curl",
+    "name": "Curl bíceps barra",
+    "primary_muscle": "biceps",
+    "secondary_muscles": [
+      "forearms"
+    ],
+    "equipment": "barbell",
+    "category": "isolation",
+    "modality": "free_weight",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-Barbell-barbell-curl-front.mp4"
+  },
+  {
+    "slug": "biceps-dumbbell-curl",
+    "name": "Curl mancuernas",
+    "primary_muscle": "biceps",
+    "secondary_muscles": [
+      "forearms"
+    ],
+    "equipment": "dumbbell",
+    "category": "isolation",
+    "modality": "free_weight",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-Dumbbells-dumbbell-curl-front.mp4"
+  },
+  {
+    "slug": "biceps-hammer-curl",
+    "name": "Curl martillo",
+    "primary_muscle": "biceps",
+    "secondary_muscles": [
+      "forearms"
+    ],
+    "equipment": "dumbbell",
+    "category": "isolation",
+    "modality": "free_weight",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-Dumbbells-dumbbell-hammer-curl-front.mp4"
+  },
+  {
+    "slug": "biceps-preacher-curl",
+    "name": "Curl predicador",
+    "primary_muscle": "biceps",
+    "secondary_muscles": [],
+    "equipment": "barbell",
+    "category": "isolation",
+    "modality": "free_weight",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-Barbell-ez-bar-preacher-curl-front.mp4"
+  },
+  {
+    "slug": "biceps-cable-curl",
+    "name": "Curl polea",
+    "primary_muscle": "biceps",
+    "secondary_muscles": [],
+    "equipment": "cable",
+    "category": "isolation",
+    "modality": "machine",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-Cables-cable-bar-curl-front.mp4"
+  },
+  {
+    "slug": "biceps-concentration-curl",
+    "name": "Curl concentrado",
+    "primary_muscle": "biceps",
+    "secondary_muscles": [],
+    "equipment": "dumbbell",
+    "category": "isolation",
+    "modality": "free_weight",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-dumbbell-concentration-curl-front.mp4"
+  },
+  {
+    "slug": "triceps-bench-dips",
+    "name": "Fondos en banco",
+    "primary_muscle": "triceps",
+    "secondary_muscles": [
+      "chest",
+      "shoulders"
+    ],
+    "equipment": "bodyweight",
+    "category": "isolation",
+    "modality": "bodyweight",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-Bodyweight-bench-dips-front.mp4"
+  },
+  {
+    "slug": "triceps-cable-pushdown",
+    "name": "Extensión tríceps polea",
+    "primary_muscle": "triceps",
+    "secondary_muscles": [],
+    "equipment": "cable",
+    "category": "isolation",
+    "modality": "machine",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-Cables-cable-push-down-front.mp4"
+  },
+  {
+    "slug": "triceps-skull-crusher",
+    "name": "Press francés",
+    "primary_muscle": "triceps",
+    "secondary_muscles": [],
+    "equipment": "barbell",
+    "category": "isolation",
+    "modality": "free_weight",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-barbell-laying-tricep-extensions-front.mp4"
+  },
+  {
+    "slug": "triceps-overhead-extension",
+    "name": "Extensión sobre cabeza",
+    "primary_muscle": "triceps",
+    "secondary_muscles": [],
+    "equipment": "dumbbell",
+    "category": "isolation",
+    "modality": "free_weight",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-Dumbbells-dumbbell-overhead-tricep-extension-front.mp4"
+  },
+  {
+    "slug": "triceps-close-grip-bench",
+    "name": "Press cerrado",
+    "primary_muscle": "triceps",
+    "secondary_muscles": [
+      "chest"
+    ],
+    "equipment": "barbell",
+    "category": "compound",
+    "modality": "free_weight",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-Barbell-barbell-close-grip-bench-press-front.mp4"
+  },
+  {
+    "slug": "quads-back-squat",
+    "name": "Sentadilla",
+    "primary_muscle": "quads",
+    "secondary_muscles": [
+      "glutes"
+    ],
+    "equipment": "barbell",
+    "category": "compound",
+    "modality": "free_weight",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-Barbell-barbell-squat-front.mp4"
+  },
+  {
+    "slug": "quads-hack-squat",
+    "name": "Sentadilla hack",
+    "primary_muscle": "quads",
+    "secondary_muscles": [
+      "glutes"
+    ],
+    "equipment": "machine",
+    "category": "compound",
+    "modality": "machine",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-Machine-machine-hack-squat-front.mp4"
+  },
+  {
+    "slug": "quads-leg-press",
+    "name": "Prensa 45°",
+    "primary_muscle": "quads",
+    "secondary_muscles": [
+      "glutes"
+    ],
+    "equipment": "machine",
+    "category": "compound",
+    "modality": "machine",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-Machine-machine-leg-press-front.mp4"
+  },
+  {
+    "slug": "quads-leg-extension",
+    "name": "Extensiones de cuádriceps",
+    "primary_muscle": "quads",
+    "secondary_muscles": [],
+    "equipment": "machine",
+    "category": "isolation",
+    "modality": "machine",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-machine-leg-extension-front.mp4"
+  },
+  {
+    "slug": "quads-split-squat",
+    "name": "Split squat",
+    "primary_muscle": "quads",
+    "secondary_muscles": [
+      "glutes"
+    ],
+    "equipment": "dumbbell",
+    "category": "compound",
+    "modality": "free_weight",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-Dumbbells-dumbbell-goblet-split-squat-front.mp4"
+  },
+  {
+    "slug": "quads-lunges",
+    "name": "Zancadas",
+    "primary_muscle": "quads",
+    "secondary_muscles": [
+      "glutes"
+    ],
+    "equipment": "dumbbell",
+    "category": "compound",
+    "modality": "free_weight",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-dumbbell-split-squat-front.mp4"
+  },
+  {
+    "slug": "quads-bulgarian-split-squat",
+    "name": "Sentadilla búlgara",
+    "primary_muscle": "quads",
+    "secondary_muscles": [
+      "glutes"
+    ],
+    "equipment": "dumbbell",
+    "category": "compound",
+    "modality": "free_weight",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-Dumbbells-dumbbell-bulgarian-split-squat-front_P7GOi9A.mp4"
+  },
+  {
+    "slug": "hamstrings-romanian-deadlift",
+    "name": "Peso muerto rumano",
+    "primary_muscle": "hamstrings",
+    "secondary_muscles": [
+      "glutes",
+      "back"
+    ],
+    "equipment": "barbell",
+    "category": "compound",
+    "modality": "free_weight",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-Barbell-barbell-romanian-deadlift-front.mp4"
+  },
+  {
+    "slug": "hamstrings-leg-curl",
+    "name": "Curl femoral tumbado",
+    "primary_muscle": "hamstrings",
+    "secondary_muscles": [],
+    "equipment": "machine",
+    "category": "isolation",
+    "modality": "machine",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-machine-hamstring-curl-front.mp4"
+  },
+  {
+    "slug": "hamstrings-good-morning",
+    "name": "Buenos días",
+    "primary_muscle": "hamstrings",
+    "secondary_muscles": [
+      "back",
+      "glutes"
+    ],
+    "equipment": "barbell",
+    "category": "compound",
+    "modality": "free_weight",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-Barbell-barbell-low-bar-good-morning-front.mp4"
+  },
+  {
+    "slug": "glutes-hip-thrust",
+    "name": "Hip thrust",
+    "primary_muscle": "glutes",
+    "secondary_muscles": [
+      "hamstrings"
+    ],
+    "equipment": "barbell",
+    "category": "compound",
+    "modality": "free_weight",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-Barbell-barbell-hip-thrust-front.mp4"
+  },
+  {
+    "slug": "glutes-glute-bridge",
+    "name": "Puente de glúteo",
+    "primary_muscle": "glutes",
+    "secondary_muscles": [
+      "hamstrings"
+    ],
+    "equipment": "bodyweight",
+    "category": "isolation",
+    "modality": "bodyweight",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-Bodyweight-glute-bridge-front.mp4"
+  },
+  {
+    "slug": "glutes-cable-kickback",
+    "name": "Patada de glúteo polea",
+    "primary_muscle": "glutes",
+    "secondary_muscles": [],
+    "equipment": "cable",
+    "category": "isolation",
+    "modality": "machine",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-Cables-cable-standing-kickback-front.mp4"
+  },
+  {
+    "slug": "glutes-abductor-machine",
+    "name": "Abductores",
+    "primary_muscle": "glutes",
+    "secondary_muscles": [],
+    "equipment": "machine",
+    "category": "isolation",
+    "modality": "machine",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-Machine-machine-hip-abduction-front.mp4"
+  },
+  {
+    "slug": "glutes-sumo-deadlift",
+    "name": "Peso muerto sumo",
+    "primary_muscle": "glutes",
+    "secondary_muscles": [
+      "hamstrings",
+      "back"
+    ],
+    "equipment": "barbell",
+    "category": "compound",
+    "modality": "free_weight",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-Barbell-barbell-sumo-deadlift-front_hI2eO77.mp4"
+  },
+  {
+    "slug": "calves-standing-raise",
+    "name": "Elevación de gemelos parado",
+    "primary_muscle": "calves",
+    "secondary_muscles": [],
+    "equipment": "machine",
+    "category": "isolation",
+    "modality": "machine",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-machine-standing-calf-raises-front.mp4"
+  },
+  {
+    "slug": "calves-seated-raise",
+    "name": "Elevación de gemelos sentado",
+    "primary_muscle": "calves",
+    "secondary_muscles": [],
+    "equipment": "machine",
+    "category": "isolation",
+    "modality": "machine",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-machine-seated-calf-raise-front.mp4"
+  },
+  {
+    "slug": "calves-leg-press-raise",
+    "name": "Gemelos en prensa",
+    "primary_muscle": "calves",
+    "secondary_muscles": [],
+    "equipment": "machine",
+    "category": "isolation",
+    "modality": "machine",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-Machine-machine-horizontal-leg-press-calf-raise-front.mp4"
+  },
+  {
+    "slug": "calves-donkey-raise",
+    "name": "Gemelos burro",
+    "primary_muscle": "calves",
+    "secondary_muscles": [],
+    "equipment": "machine",
+    "category": "isolation",
+    "modality": "machine",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-Machine-machine-donkey-calf-raise-front.mp4"
+  },
+  {
+    "slug": "abs-crunch",
+    "name": "Crunch abdominal",
+    "primary_muscle": "abs",
+    "secondary_muscles": [],
+    "equipment": "bodyweight",
+    "category": "isolation",
+    "modality": "bodyweight",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-bodyweight-crunch-front.mp4"
+  },
+  {
+    "slug": "abs-plank",
+    "name": "Plancha abdominal",
+    "primary_muscle": "abs",
+    "secondary_muscles": [],
+    "equipment": "bodyweight",
+    "category": "isolation",
+    "modality": "bodyweight",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-Bodyweight-forearm-plank-front.mp4"
+  },
+  {
+    "slug": "abs-leg-raise",
+    "name": "Elevación de piernas",
+    "primary_muscle": "abs",
+    "secondary_muscles": [],
+    "equipment": "bodyweight",
+    "category": "isolation",
+    "modality": "bodyweight",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-Bodyweight-laying-leg-raises-front.mp4"
+  },
+  {
+    "slug": "abs-ab-wheel",
+    "name": "Rueda abdominal",
+    "primary_muscle": "abs",
+    "secondary_muscles": [
+      "shoulders"
+    ],
+    "equipment": "bodyweight",
+    "category": "compound",
+    "modality": "bodyweight",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-Barbell-barbell-roll-outs-front.mp4"
+  },
+  {
+    "slug": "abs-russian-twist",
+    "name": "Giro ruso",
+    "primary_muscle": "abs",
+    "secondary_muscles": [],
+    "equipment": "bodyweight",
+    "category": "isolation",
+    "modality": "bodyweight",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-Dumbbells-dumbbell-russian-twist-front.mp4"
+  },
+  {
+    "slug": "abs-side-plank",
+    "name": "Plancha lateral",
+    "primary_muscle": "abs",
+    "secondary_muscles": [],
+    "equipment": "bodyweight",
+    "category": "isolation",
+    "modality": "bodyweight",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-bodyweight-elbow-side-plank-front.mp4"
+  },
+  {
+    "slug": "full-body-kettlebell-swing",
+    "name": "Swing kettlebell",
+    "primary_muscle": "glutes",
+    "secondary_muscles": [
+      "hamstrings",
+      "abs"
+    ],
+    "equipment": "kettlebell",
+    "category": "compound",
+    "modality": "free_weight",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-Kettlebells-kettlebell-swing-front.mp4"
+  },
+  {
+    "slug": "full-body-burpee",
+    "name": "Burpees",
+    "primary_muscle": "full_body",
+    "secondary_muscles": [
+      "abs",
+      "quads"
+    ],
+    "equipment": "bodyweight",
+    "category": "compound",
+    "modality": "bodyweight",
+    "description": "",
+    "video_url": "https://musclewiki.com/api-next/videos/male-bodyweight-burpee-front.mp4"
+  }
+]
