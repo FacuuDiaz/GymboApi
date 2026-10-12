@@ -153,6 +153,7 @@ SPECTACULAR_SETTINGS = {
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
     "SCHEMA_PATH_PREFIX": "/api/v1",
+    "ENUM_NAME_OVERRIDES": {"MuscleGroupEnum": "apps.training.choices.MuscleGroup"},
     "SERVE_PERMISSIONS": ["rest_framework.permissions.AllowAny"],
     "SERVE_AUTHENTICATION": ["rest_framework.authentication.SessionAuthentication"],
 }

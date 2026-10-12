@@ -13,7 +13,7 @@ La app móvil nunca se conecta a PostgreSQL: solo habla con esta API.
 | Registro, login (usuario o email), tokens, logout, revocación | ✅ Implementado y probado |
 | Google Sign-In (verificación OIDC, vincular y desvincular) | ✅ Implementado y probado. ⚠️ Requiere cargar los Client IDs (`GOOGLE_OAUTH_CLIENT_IDS`) |
 | Perfil propio (`/users/me/`), cambio de contraseña | ✅ Implementado y probado |
-| Rutinas, sesiones, mediciones (API) | ⏳ Etapa 4 (los modelos ya existen) |
+| Ejercicios, rutinas y versiones, sesiones, mediciones, preferencias y progreso (API) | ✅ Implementado y probado |
 | Sincronización y migración invitado → cuenta | ⏳ Etapa 5 |
 | Entrenadores y alumnos | ⏳ Etapa 6 |
 | Compartición y comunidad | ⏳ Etapa 7 |
@@ -223,6 +223,45 @@ Todas bajo `/api/v1/`. Los errores siempre tienen la forma `{"error": {"code", "
 - **Detrás de un proxy:** configurá `DJANGO_NUM_PROXIES` para que la IP del cliente sea la real.
 
 ---
+
+## API de entrenamiento
+
+Todas bajo `/api/v1/` y con `Authorization: Bearer <access>`. Cada endpoint solo ve los datos **del usuario autenticado**: el registro de otra persona responde **404**, igual que uno que no existe.
+
+| Endpoint | Métodos | Notas |
+|---|---|---|
+| `exercises/` | GET, POST | GET incluye los integrados, los propios y los publicados. Filtros: `mine`, `q`, `muscle`, `equipment`. |
+| `exercises/{id}/` | GET, PATCH, DELETE | Solo los propios; los integrados responden 403. |
+| `routines/` | GET, POST | Incluyen el `plan` vigente (`plan_version`). |
+| `routines/{id}/` | GET, PATCH, DELETE | Si el plan cambia, se crea una **versión nueva e inmutable**. |
+| `routines/{id}/versions/` | GET | Todas las versiones del plan, de la más antigua a la más nueva. |
+| `workouts/` | GET, POST | Sesión con ejercicios y series anidados. Filtros: `from`, `to` (fecha local), `status`, `routine`. |
+| `workouts/{id}/` | GET, PATCH, DELETE | Para guardar el avance de una sesión en curso o corregir una ya terminada. |
+| `measurements/` | GET, POST | POST con una fecha que ya tiene valor **lo reemplaza**, igual que en la app. |
+| `measurements/{id}/` | GET, PATCH, DELETE | |
+| `users/me/preferences/` | GET, PATCH | Unidad, objetivo, incrementos, tema, etc. Si hay conflicto, gana la última escritura de cada campo. |
+| `progress/weekly/` | GET | `from`, `to`, `unit`. Semanas de lunes a domingo: sesiones, series, volumen y duración. |
+| `progress/exercises/{exercise_id}/` | GET | Un punto por sesión: peso máximo, 1RM estimado, volumen. |
+
+### Convenciones
+
+- **IDs del cliente e idempotencia:** la app genera los UUID y los envía en `id`. Repetir un POST con el mismo `id` devuelve **200** con lo ya guardado, sin duplicar. Un `id` que pertenece a otra cuenta responde **409 `id_conflict`**, sin revelar de quién es.
+- **Concurrencia optimista:** todo PATCH exige `base_version`, que es la `version` sobre la que el cliente hizo su cambio. Si no coincide, la respuesta es **409 `version_conflict`** e incluye en `error.current` el estado actual del servidor para poder combinar.
+- **Borrados:** son *tombstones* (`deleted_at`). Los listados no los muestran, salvo con `?updated_since=<ISO>`, que devuelve todo lo modificado desde ese momento, incluidos los borrados (para sincronizar).
+- **Historia inmutable:**
+  - Cada sesión apunta a la versión del plan con la que se entrenó y guarda una copia del nombre, el músculo y el equipo de cada ejercicio, junto con lo planificado (series, reps y peso objetivo).
+  - Ni editar la rutina ni borrar un ejercicio cambia una sesión pasada.
+  - Una sesión puede referenciar un ejercicio que el servidor no conoce solo si trae su `exercise_name`, por ejemplo al migrar historial local antiguo.
+- **Referencias a ejercicios:** se usa el *slug* para los integrados (`chest-bench-press`) o el UUID para los personalizados, tal como los guarda la app.
+- **Fechas:** `scheduled_date` es la fecha **local** que vivió el usuario, y el servidor nunca la recalcula. `timezone` es el nombre IANA de la zona.
+- **`null` no es 0:**
+  - Un peso o unas reps sin registrar valen `null`.
+  - Una semana sin sesiones informa `sessions: 0` y todas sus métricas en `null`.
+  - Una sesión en curso tiene `duration_seconds: null`.
+- **Unidades:**
+  - Cada sesión guarda la unidad de sus pesos (`kg` o `lb`). Si está vacía, se asume la unidad preferida del usuario.
+  - El progreso convierte todo a la unidad pedida.
+  - Las fórmulas son las mismas que en la app: 1RM de Epley con un tope de 15 reps; solo cuentan las series completadas con peso y reps.
 
 ## Producción
 

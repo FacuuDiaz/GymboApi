@@ -18,4 +18,7 @@ def api_exception_handler(exc, context):
     code = getattr(detail, "code", None) or getattr(exc, "default_code", "error")
     message = str(detail) if detail is not None else str(exc)
     response.data = {"error": {"code": code, "message": message}}
+    # Optimistic-concurrency conflicts carry the server's current state so the client can merge.
+    if hasattr(exc, "current"):
+        response.data["error"]["current"] = exc.current
     return response
