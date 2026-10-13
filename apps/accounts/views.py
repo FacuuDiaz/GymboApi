@@ -26,6 +26,7 @@ from .models import SocialIdentity, User
 from .serializers import (
     AuthResponseSerializer,
     ChangePasswordSerializer,
+    ChangeUsernameSerializer,
     DeleteAccountSerializer,
     DiscoverablePersonSerializer,
     GoogleAuthResponseSerializer,
@@ -357,6 +358,25 @@ class ChangePasswordView(APIView):
         user.save(update_fields=["password"])
         revoke_all_sessions(user)
         return Response(issue_token_pair(user))
+
+
+class ChangeUsernameView(APIView):
+    """Changes the requester's username (confirmed; at most once per cooldown; mentions in copies follow)."""
+
+    throttle_classes = [AuthIPThrottle]
+
+    @extend_schema(
+        request=ChangeUsernameSerializer,
+        responses={200: UserSerializer, 409: OpenApiResponse(description="username_change_too_soon")},
+        tags=["users"],
+    )
+    def post(self, request):
+        from .username import change_username
+
+        serializer = ChangeUsernameSerializer(data=request.data, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        user = change_username(request.user, serializer.validated_data["username"])
+        return Response(UserSerializer(user).data)
 
 
 class PeoplePagination(DefaultCursorPagination):

@@ -8,7 +8,6 @@ top of it (their copies, their assigned routines, their sessions) stays theirs,
 untouched, and loses only the link back to the deleted person.
 """
 import logging
-import re
 
 from django.db import transaction
 from django.db.models import F, Q, TextField
@@ -16,6 +15,7 @@ from django.db.models.functions import Cast
 from django.utils import timezone
 from rest_framework_simplejwt.token_blacklist.models import OutstandingToken
 
+from .mentions import rewrite_mentions
 from .tokens import revoke_all_sessions
 
 logger = logging.getLogger("gymbo.auth")
@@ -25,18 +25,7 @@ DELETED_AUTHOR = "una cuenta eliminada"
 
 def _anonymize_attributions(user) -> int:
     """'Basada en «X» de @ana' → 'Basada en «X» de una cuenta eliminada' in other people's routines."""
-    from apps.training.models import Routine
-
-    mention = re.compile(rf"@{re.escape(user.username)}(?![\w.@+-])", re.IGNORECASE)
-    changed = 0
-    for routine in Routine.objects.filter(attribution__icontains=f"@{user.username}").exclude(owner=user):
-        text = mention.sub(DELETED_AUTHOR, routine.attribution)
-        if text != routine.attribution:
-            routine.attribution = text
-            routine.version += 1  # so the owner's devices pull the new text
-            routine.save()
-            changed += 1
-    return changed
+    return rewrite_mentions(user.username, DELETED_AUTHOR, exclude_owner_id=user.pk)
 
 
 def _release_exercises(user) -> int:

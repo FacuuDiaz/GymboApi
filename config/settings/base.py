@@ -154,6 +154,9 @@ SIMPLE_JWT = {
 # login disabled (the endpoint answers 503 google_not_configured).
 GOOGLE_OAUTH_CLIENT_IDS = env.list("GOOGLE_OAUTH_CLIENT_IDS", default=[])
 
+# A username can change at most once in this many days (it is public: search, shares, attributions).
+USERNAME_CHANGE_COOLDOWN_DAYS = env.int("USERNAME_CHANGE_COOLDOWN_DAYS", default=7)
+
 SPECTACULAR_SETTINGS = {
     "TITLE": "Gymbo API",
     "DESCRIPTION": "API REST de Gymbo. Ver README.md del repositorio GymboAPI.",

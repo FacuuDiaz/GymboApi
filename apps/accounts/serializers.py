@@ -32,16 +32,26 @@ class UserSerializer(serializers.ModelSerializer):
     """The authenticated user's own account. Never includes the password hash."""
 
     has_password = serializers.SerializerMethodField()
+    username_change_allowed_at = serializers.SerializerMethodField()
     linked_providers = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = [
             "id", "username", "email", "first_name", "last_name", "phone", "gender", "birth_date",
-            "date_joined", "has_password", "linked_providers", "discoverable", "is_coach",
+            "date_joined", "has_password", "linked_providers", "discoverable", "is_coach", "username_change_allowed_at",
         ]
         # Changing username/email needs its own verified flow; not editable here yet.
         read_only_fields = ["id", "username", "email", "date_joined"]
+
+    def get_username_change_allowed_at(self, user) -> str | None:
+        """null = can change it now."""
+        from django.utils import timezone
+
+        from .username import next_change_allowed_at
+
+        allowed_at = next_change_allowed_at(user)
+        return allowed_at.isoformat() if allowed_at and allowed_at > timezone.now() else None
 
     def get_has_password(self, user) -> bool:
         return user.has_usable_password()
@@ -138,6 +148,32 @@ class GoogleTokenSerializer(serializers.Serializer):
 
 class PasswordConfirmSerializer(serializers.Serializer):
     password = serializers.CharField(max_length=128, trim_whitespace=False, style={"input_type": "password"})
+
+
+class ChangeUsernameSerializer(serializers.Serializer):
+    """The new username, confirmed with the password (or the current username for Google-only accounts)."""
+
+    username = serializers.CharField(min_length=3, max_length=30, validators=[UnicodeUsernameValidator()])
+    password = serializers.CharField(max_length=128, trim_whitespace=False, required=False, allow_blank=True)
+    confirm_username = serializers.CharField(max_length=150, required=False, allow_blank=True)
+
+    def validate_username(self, value):
+        value = value.strip()
+        user = self.context["request"].user
+        if value == user.username:
+            raise serializers.ValidationError("Ya es tu nombre de usuario.", code="same_username")
+        if User.objects.filter(username__iexact=value).exclude(pk=user.pk).exists():
+            raise serializers.ValidationError("Ese nombre de usuario ya está en uso.", code="username_taken")
+        return value
+
+    def validate(self, attrs):
+        user = self.context["request"].user
+        if user.has_usable_password():
+            if not user.check_password(attrs.get("password", "")):
+                raise serializers.ValidationError({"password": ["Contraseña incorrecta."]})
+        elif attrs.get("confirm_username", "").strip().lower() != user.username.lower():
+            raise serializers.ValidationError({"confirm_username": ["Escribí tu nombre de usuario actual para confirmar."]})
+        return attrs
 
 
 class DeleteAccountSerializer(serializers.Serializer):

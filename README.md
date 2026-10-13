@@ -205,6 +205,12 @@ Todas bajo `/api/v1/`. Los errores siempre tienen la forma `{"error": {"code", "
 5. **Logout:** revoca el refresh. El access de ese dispositivo sigue siendo válido hasta 10 minutos más, salvo que se use `logout-all` o se cambie la contraseña, que lo invalidan en el acto. La precisión de esa invalidación es de 1 segundo.
 6. **Desactivación:** una cuenta desactivada no puede iniciar sesión ni renovar tokens.
 
+### Cuenta: usuario, contraseña y Google
+
+- **Formas de entrar:** Google (`auth/google/`), o usuario **o** email + contraseña (`auth/login/`, campo `login`) si la cuenta tiene contraseña.
+- **Crear contraseña (cuentas de Google):** `POST users/me/password/` con `{new_password}`. A las cuentas sin contraseña no se les pide la actual. Devuelve un par de tokens nuevo y cierra las demás sesiones. Desde ahí la cuenta entra también con usuario/email + contraseña, y puede desvincular Google (`auth/google/unlink/` con `{password}`), que nunca se permite si la dejaría sin forma de entrar.
+- **Cambiar el usuario:** `POST users/me/username/` con `{username, password}` (o `{username, confirm_username}` en cuentas sin contraseña). Mismas reglas que el registro (3–30 caracteres, letras, números y `@.+-_`, único sin distinguir mayúsculas). Una vez cada `USERNAME_CHANGE_COOLDOWN_DAYS` (7 por defecto; 409 `username_change_too_soon`); `users/me/` informa `username_change_allowed_at`. Las menciones `@viejo` en las atribuciones de copias ajenas pasan a `@nuevo`. El nombre viejo queda libre en el acto.
+
 ### Google Sign-In
 
 - **Flujo:** la app obtiene un *ID token* con el SDK nativo de Google y lo manda a `auth/google/`.
