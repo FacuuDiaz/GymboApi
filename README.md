@@ -54,6 +54,7 @@ scripts/           backup.sh, restore.sh
 compose.yaml       desarrollo
 compose.prod.yaml  producción
 compose.db-port.yaml  (opcional) expone PostgreSQL en 127.0.0.1 para herramientas gráficas
+railway.toml       despliegue en Railway (ver §Railway)
 ```
 
 La sincronización no necesita una app propia: usa los endpoints de `training` con `updated_since` y `base_version`.
@@ -449,6 +450,41 @@ Con nginx, usá `proxy_pass http://127.0.0.1:8000;` y `proxy_set_header Host $ho
 - La documentación de la API es solo para staff.
 
 **El firewall del servidor tiene que dejar abiertos solo los puertos 80, 443 y SSH.** Docker Compose por sí solo no protege el servidor.
+
+### Railway
+
+El repo se despliega tal cual: Railway construye el `Dockerfile` (su última etapa, `prod`, con Gunicorn) y lee `railway.toml`. Ese archivo:
+- corre `migrate` como *pre-deploy*: si falla, el deploy se corta y sigue la versión anterior;
+- usa `/health/ready/` como healthcheck.
+
+Gunicorn escucha en el puerto que Railway pone en `$PORT`.
+
+**1. Base de datos.** En el proyecto: *New → Database → PostgreSQL*. Acepta SSL, así que `DATABASE_SSLMODE=require` funciona.
+
+**2. Variables del servicio de la API** (*Variables*):
+
+| Variable | Valor |
+|---|---|
+| `DATABASE_URL` | `${{Postgres.DATABASE_URL}}` (referencia a la base, por la red privada) |
+| `DATABASE_SSLMODE` | `require` |
+| `DJANGO_SECRET_KEY` | aleatoria, ≥ 50 caracteres: `python3 -c "import secrets; print(secrets.token_urlsafe(60))"` |
+| `JWT_SIGNING_KEY` | otra aleatoria, distinta (si falta, usa `DJANGO_SECRET_KEY`) |
+| `DJANGO_ALLOWED_HOSTS` | `<tu-servicio>.up.railway.app,healthcheck.railway.app` (el segundo es el host del healthcheck de Railway: sin él, el deploy nunca queda sano) |
+| `DJANGO_ADMIN_URL` | una ruta difícil de adivinar, terminada en `/` (ej. `gestion-8f3k2/`) |
+| `DJANGO_NUM_PROXIES` | `1` (para que los límites por IP vean la IP real del cliente) |
+| `FORWARDED_ALLOW_IPS` | `*` (la API solo es accesible a través del proxy de Railway) |
+| `WEB_CONCURRENCY` | `2` (subilo si le das más memoria al servicio) |
+| `GOOGLE_OAUTH_CLIENT_IDS` | opcional, cuando existan los Client IDs |
+
+`PORT` no se define: lo pone Railway.
+
+**3. Dominio.** *Settings → Networking → Generate Domain*. Ese dominio va en `DJANGO_ALLOWED_HOSTS` y, con `https://`, en `EXPO_PUBLIC_API_URL` de la app (hay que regenerar el APK).
+
+**4. Admin.** Abrí una terminal en el servicio (`railway ssh`) y corré `python manage.py createsuperuser`. Swagger (`/api/v1/docs/`) en producción solo responde a staff con sesión iniciada en el admin.
+
+**5. Backups.** Activalos en el servicio de PostgreSQL (*Backups*). `scripts/backup.sh` es para Compose; contra Railway se puede usar `pg_dump` con la URL pública de la base.
+
+**Opcional, privilegio mínimo:** la base de Railway entrega el superusuario `postgres`. Para que la API no lo use, creá un rol propio como en la sección siguiente y apuntá `DATABASE_URL` a ese rol.
 
 ### PostgreSQL externo con privilegio mínimo
 
