@@ -28,6 +28,9 @@ SECURE_SSL_REDIRECT = env.bool("DJANGO_SECURE_SSL_REDIRECT", default=True)
 SECURE_REDIRECT_EXEMPT = [r"^health/"]
 SECURE_HSTS_SECONDS = env.int("DJANGO_HSTS_SECONDS", default=31536000)
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+# Opt-in: once a domain is on the browsers' preload list, leaving it takes months.
+# Enable only when every subdomain serves HTTPS for good (check --deploy warns W021 until then).
+SECURE_HSTS_PRELOAD = env.bool("DJANGO_HSTS_PRELOAD", default=False)
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True

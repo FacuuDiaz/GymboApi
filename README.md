@@ -443,7 +443,7 @@ Con nginx, usá `proxy_pass http://127.0.0.1:8000;` y `proxy_set_header Host $ho
 - `DJANGO_NUM_PROXIES=1`
 
 **Comportamiento comprobado:**
-- Django redirige HTTP a HTTPS y envía HSTS.
+- Django redirige HTTP a HTTPS y envía HSTS (1 año, con subdominios). La *preload list* de los navegadores es opcional (`DJANGO_HSTS_PRELOAD=true`): activala solo cuando todos los subdominios sirvan HTTPS para siempre, porque salir de esa lista lleva meses. Mientras tanto, `check --deploy` muestra el aviso W021, y es esperado.
 - Un `Host` desconocido recibe 400.
 - `/admin/` responde 404, porque el admin vive en `DJANGO_ADMIN_URL`.
 - La documentación de la API es solo para staff.
