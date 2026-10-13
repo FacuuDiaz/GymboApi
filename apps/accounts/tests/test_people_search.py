@@ -29,7 +29,7 @@ def test_only_people_who_opted_in_appear(people):
 
 
 def test_coach_filter_needs_both_labels(people):
-    assert names(people["yo"].get(S, {"coach": "1"})) == ["ana_coach"]
+    assert names(people["yo"].get(S, {"q": "ana", "coach": "1"})) == ["ana_coach"]
 
 
 def test_results_expose_only_the_minimum(people):
@@ -43,9 +43,18 @@ def test_you_never_find_yourself(people):
     assert names(people["yo"].get(S, {"q": "yo"})) == []
 
 
-def test_without_text_it_lists_everyone_who_opted_in(people):
-    assert names(people["yo"].get(S)) == ["ana_coach", "ana_entrena"]
-    assert names(people["yo"].get(S, {"q": ""})) == ["ana_coach", "ana_entrena"]
+def test_the_directory_can_never_be_listed_whole(people):
+    """Searching always needs 2+ letters, also for coaches: no request returns everyone."""
+    for params in ({}, {"q": ""}, {"q": "a"}, {"coach": "1"}, {"q": "a", "coach": "1"}):
+        assert people["yo"].get(S, params).status_code == 400, params
+
+
+def test_results_come_in_small_pages(people, make_user):
+    for i in range(60):
+        make_user(username=f"ana_extra{i:02d}", discoverable=True)
+    page = people["yo"].get(S, {"q": "ana"}).json()
+    assert len(page["results"]) == 20 and page["next"]
+    assert len(people["yo"].get(S, {"q": "ana", "page_size": 500}).json()["results"]) == 50  # never more than 50 per request
 
 
 def test_opting_in_and_out_from_the_profile(people):

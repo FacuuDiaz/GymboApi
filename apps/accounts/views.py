@@ -8,7 +8,7 @@ from django.db.models import Count, OuterRef, Subquery
 from django.db.models.functions import Coalesce
 from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
 from rest_framework import generics, status
-from rest_framework.exceptions import APIException, AuthenticationFailed, PermissionDenied
+from rest_framework.exceptions import APIException, AuthenticationFailed, PermissionDenied, ValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.throttling import UserRateThrottle
@@ -360,7 +360,11 @@ class ChangePasswordView(APIView):
 
 
 class PeoplePagination(DefaultCursorPagination):
+    """Small pages: the directory is never handed out in bulk."""
+
     ordering = ("username", "id")
+    page_size = 20
+    max_page_size = 50
 
 
 class PeopleSearchThrottle(UserRateThrottle):
@@ -373,9 +377,9 @@ class PeopleSearchView(generics.ListAPIView):
     """
     People search for "Buscar". Opt-in: only accounts with `discoverable` appear,
     never the requester, and only their username, the coach label and how many
-    routines they published. Without `q` it lists everyone who opted in
-    (paginated, by username); `q` filters by username; `coach=1` keeps only
-    people who marked themselves as coaches.
+    routines they published. A search always needs `q` (2+ letters of the
+    username), also with `coach=1`: there is no way to list the whole directory,
+    and results come in pages of 20.
     """
 
     serializer_class = DiscoverablePersonSerializer
@@ -392,14 +396,15 @@ class PeopleSearchView(generics.ListAPIView):
 
         q = self.request.query_params.get("q", "").strip()[:150]
         coaches_only = self.request.query_params.get("coach") in ("1", "true")
+        if len(q) < 2:
+            raise ValidationError({"q": ["Escribí al menos 2 letras del usuario."]})
         published = community_routines().filter(owner=OuterRef("pk")).values("owner").annotate(n=Count("id", distinct=True)).values("n")
         qs = (
             User.objects.filter(discoverable=True, is_active=True)
             .exclude(pk=self.request.user.pk)
             .annotate(routines_count=Coalesce(Subquery(published), 0))
         )
-        if q:
-            qs = qs.filter(username__icontains=q)
+        qs = qs.filter(username__icontains=q)
         if coaches_only:
             qs = qs.filter(is_coach=True)
         return qs
