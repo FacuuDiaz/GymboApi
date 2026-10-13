@@ -226,6 +226,15 @@ def community_routines():
     )
 
 
+TOP_STARRED_LIMIT = 100
+
+
+def top_starred_routines(user):
+    """The ranking: published routines with at least one star, most starred first (ties: newest), at most 100."""
+    ranked = community_routines().filter(stars_count__gte=1).order_by("-stars_count", "-published_at", "-id")
+    return with_starred(ranked, user)[:TOP_STARRED_LIMIT]
+
+
 def with_starred(queryset, user):
     """Adds `starred` (did `user` star it?) without one query per routine."""
     if not getattr(user, "is_authenticated", False):

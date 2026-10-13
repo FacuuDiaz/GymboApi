@@ -90,3 +90,28 @@ def test_deleting_an_account_removes_its_stars_and_the_stars_on_its_routines(peo
     autora.post(f"{C}{other['id']}/star/")
     assert autora.delete("/api/v1/users/me/", {"password": "una-clave-segura-123"}, format="json").status_code == 204
     assert not RoutineStar.objects.exists()
+
+
+def test_top_ranking_has_only_starred_routines_most_starred_first(people, api):
+    autora = people["autora"]
+    one, two, none = published(autora, "Una"), published(autora, "Dos"), published(autora, "Ninguna")
+    people["fan"].post(f"{C}{one['id']}/star/")
+    for name in ("fan", "otra"):
+        people[name].post(f"{C}{two['id']}/star/")
+    ranking = people["fan"].get(f"{C}top/").json()
+    assert [(r["name"], r["stars_count"], r["starred"]) for r in ranking] == [("Dos", 2, True), ("Una", 1, True)]
+    assert none["id"] not in [r["id"] for r in ranking]
+    assert [r["name"] for r in api.get(f"{C}top/").json()] == ["Dos", "Una"]  # also for guests, without "starred"
+
+
+def test_top_ranking_stops_at_100(people, make_user, auth_client):
+    from apps.sharing import services
+    from apps.training.models import Routine
+
+    autora = people["autora"]
+    fan = people["fan"]
+    for i in range(101):
+        r = published(autora, f"R{i}")
+        fan.post(f"{C}{r['id']}/star/")
+    assert Routine.objects.filter(visibility="public").count() == 101
+    assert len(fan.get(f"{C}top/").json()) == services.TOP_STARRED_LIMIT == 100

@@ -209,6 +209,13 @@ class CommunityRoutineViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, 
     def get_permissions(self):
         return [IsAuthenticated()] if self.action in ("copy", "report", "star") else [AllowAny()]
 
+    @extend_schema(tags=["community"], responses={200: PublicRoutineSerializer(many=True)})
+    @action(detail=False, methods=["get"])
+    def top(self, request):
+        """Ranking de las 100 rutinas con más estrellas (solo las que tienen al menos una). Sin paginar."""
+        routines = services.top_starred_routines(request.user)
+        return Response(PublicRoutineSerializer(routines, many=True, context={"request": request}).data)
+
     def get_queryset(self):
         qs = services.with_starred(services.community_routines(), self.request.user)
         params = self.request.query_params

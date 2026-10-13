@@ -327,6 +327,7 @@ Una misma cuenta puede ser alumna de varios entrenadores y entrenar a muchos alu
 | `POST community/routines/{id}/copy/` · `community/exercises/{id}/copy/` | Con cuenta | Copia a tu cuenta |
 | `POST reports/` | Con cuenta | `{kind, object_id, reason, details?}` |
 | `POST / DELETE community/routines/{id}/star/` | Con cuenta | Pone o quita una ⭐ (como en GitHub). `POST` responde `{starred, stars_count}`: 201 si es nueva, 200 si ya estaba. No se puede a rutinas propias (400 `own_routine`) |
+| `GET community/routines/top/` | Cualquiera | Ranking: las 100 rutinas con más ⭐ (solo con al menos una), de más a menos; empates, la más nueva. Sin paginar |
 | `GET users/me/stars/` | Con cuenta | Tus rutinas con ⭐ que siguen publicadas, la más reciente primero |
 | `GET users/search/?q=&coach=1` | Con cuenta | Personas que eligieron aparecer (`discoverable`). `q` es obligatorio (2+ letras del username, también con `coach=1`): nunca se puede listar el directorio entero; páginas de 20 (máximo 50); `coach=1` lista quienes se marcaron `is_coach`. Solo devuelve `username`, `is_coach` y `routines_count`. Límite `THROTTLE_SEARCH` (60/min por cuenta) |
 

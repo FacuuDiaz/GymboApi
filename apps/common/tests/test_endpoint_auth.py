@@ -16,6 +16,7 @@ PUBLIC = [
     (r"^/api/v1/auth/(register|login|refresh|logout|google)/$", {"POST"}),
     (r"^/api/v1/shared-links/resolve/$", {"POST"}),
     (r"^/api/v1/community/(routines|exercises)/(<id>/)?$", {"GET"}),
+    (r"^/api/v1/community/routines/top/$", {"GET"}),
     (r"^/api/v1/(schema|docs)/$", {"GET"}),
 ]
 METHODS = ("GET", "POST", "PATCH", "PUT", "DELETE")
