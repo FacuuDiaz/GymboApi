@@ -29,8 +29,9 @@ WORKDIR /app
 FROM base AS dev
 COPY --from=uv /uv /usr/local/bin/uv
 COPY pyproject.toml uv.lock ./
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-install-project
+# No BuildKit cache mounts anywhere in this file: Railway validates every stage
+# and rejects cache mounts without its own id prefix.
+RUN uv sync --frozen --no-install-project --no-cache
 COPY --chown=app:app . .
 USER app
 EXPOSE 8000
@@ -41,8 +42,7 @@ CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
 FROM base AS prod-deps
 COPY --from=uv /uv /usr/local/bin/uv
 COPY pyproject.toml uv.lock ./
-# No BuildKit cache mount here: some PaaS builders (Railway) reject cache mounts
-# without their own id prefix. The lock file keeps this step cached as a layer.
+# Cached as a layer while pyproject.toml/uv.lock don't change.
 RUN UV_COMPILE_BYTECODE=1 uv sync --frozen --no-dev --no-install-project --no-cache
 
 # ── prod ─────────────────────────────────────────────────────────────────────
