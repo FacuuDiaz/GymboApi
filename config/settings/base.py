@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     "apps.training",
     "apps.coaching",
     "apps.sharing",
+    "apps.exports",
 ]
 
 MIDDLEWARE = [
@@ -128,6 +129,8 @@ REST_FRAMEWORK = {
         # Per account identifier on login: slows password guessing against one
         # account even when the attacker rotates IPs.
         "login_identifier": env.str("THROTTLE_LOGIN_IDENTIFIER", default="5/min"),
+        # Per account on data exports: each one reads the whole account.
+        "export": env.str("THROTTLE_EXPORT", default="30/hour"),
     },
     # Behind a reverse proxy, the client IP is the last X-Forwarded-For hop
     # added by that proxy (set NUM_PROXIES to the number of trusted proxies).

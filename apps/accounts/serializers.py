@@ -129,6 +129,22 @@ class PasswordConfirmSerializer(serializers.Serializer):
     password = serializers.CharField(max_length=128, trim_whitespace=False, style={"input_type": "password"})
 
 
+class DeleteAccountSerializer(serializers.Serializer):
+    """The password, or — for accounts created with Google that never set one — the username typed out."""
+
+    password = serializers.CharField(max_length=128, trim_whitespace=False, required=False, allow_blank=True)
+    confirm_username = serializers.CharField(max_length=150, required=False, allow_blank=True)
+
+    def validate(self, attrs):
+        user = self.context["request"].user
+        if user.has_usable_password():
+            if not user.check_password(attrs.get("password", "")):
+                raise serializers.ValidationError({"password": ["Contraseña incorrecta."]})
+        elif attrs.get("confirm_username", "").strip().lower() != user.username.lower():
+            raise serializers.ValidationError({"confirm_username": ["Escribí tu nombre de usuario para confirmar."]})
+        return attrs
+
+
 class ChangePasswordSerializer(serializers.Serializer):
     # Optional only for accounts without a usable password (created with Google).
     current_password = serializers.CharField(max_length=128, trim_whitespace=False, required=False, allow_blank=True)

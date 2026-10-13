@@ -21,6 +21,7 @@ from .models import SocialIdentity, User
 from .serializers import (
     AuthResponseSerializer,
     ChangePasswordSerializer,
+    DeleteAccountSerializer,
     GoogleAuthResponseSerializer,
     GoogleTokenSerializer,
     LoginSerializer,
@@ -31,6 +32,7 @@ from .serializers import (
     UserSerializer,
 )
 from .throttles import AuthIPThrottle, LoginIdentifierThrottle
+from .deletion import delete_account
 from .tokens import handle_refresh_reuse, is_blacklisted, issue_token_pair, revoke_all_sessions
 
 logger = logging.getLogger("gymbo.auth")
@@ -300,12 +302,18 @@ class GoogleUnlinkView(APIView):
 
 # ── The authenticated user's own account ────────────────────────────────────
 
-class MeView(generics.RetrieveUpdateAPIView):
+class MeView(generics.RetrieveUpdateDestroyAPIView):
     """Only ever the requester's own account — there is no user id in the URL to tamper with."""
 
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated]
-    http_method_names = ["get", "patch", "head", "options"]
+    http_method_names = ["get", "patch", "delete", "head", "options"]
+
+    def get_throttles(self):
+        # Deleting checks the password: slow guessing with a stolen access token.
+        if self.request.method == "DELETE":
+            return [*super().get_throttles(), AuthIPThrottle()]
+        return super().get_throttles()
 
     def get_object(self):
         return self.request.user
@@ -317,6 +325,18 @@ class MeView(generics.RetrieveUpdateAPIView):
     @extend_schema(tags=["users"])
     def patch(self, request, *args, **kwargs):
         return super().patch(request, *args, **kwargs)
+
+    @extend_schema(
+        request=DeleteAccountSerializer,
+        responses={204: None},
+        tags=["users"],
+        description="Elimina la cuenta y sus datos en el acto (ver README, «Eliminación de cuenta»). Cierra todas las sesiones.",
+    )
+    def delete(self, request, *args, **kwargs):
+        serializer = DeleteAccountSerializer(data=request.data, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        delete_account(request.user)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class ChangePasswordView(APIView):

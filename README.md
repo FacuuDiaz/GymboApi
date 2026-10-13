@@ -14,10 +14,10 @@ La app móvil nunca se conecta a PostgreSQL: solo habla con esta API.
 | Google Sign-In (verificación OIDC, vincular y desvincular) | ✅ Implementado y probado. ⚠️ Requiere cargar los Client IDs (`GOOGLE_OAUTH_CLIENT_IDS`) |
 | Perfil propio (`/users/me/`), cambio de contraseña | ✅ Implementado y probado |
 | Ejercicios, rutinas y versiones, sesiones, mediciones, preferencias y progreso (API) | ✅ Implementado y probado |
-| Sincronización y migración invitado → cuenta | ⏳ Etapa 5 |
+| Sincronización y migración invitado → cuenta (en la app, contra esta API) | ✅ Implementado y probado |
 | Entrenadores y alumnos (invitaciones, permisos, grupos, asignaciones con actualización automática) | ✅ Implementado y probado |
 | Compartir (personas y enlaces), catálogo comunitario, copias, denuncias | ✅ Implementado y probado |
-| Exportación y borrado de cuenta | ⏳ Etapa 8 |
+| Exportación de datos (JSON, CSV, ZIP) y eliminación de cuenta | ✅ Implementado y probado |
 
 El plan completo y las decisiones tomadas están en `Gymbo/docs/ETAPA-1-AUDITORIA.md`.
 
@@ -46,6 +46,9 @@ apps/
   common/          modelos base, errores, paginación, healthchecks, config, logging
   accounts/        usuario, identidades Google, preferencias, autenticación y tokens
   training/        ejercicios, rutinas y versiones, sesiones, series, mediciones
+  coaching/        entrenadores, alumnos, permisos, asignaciones
+  sharing/         compartir con personas y por enlace, comunidad, denuncias
+  exports/         exportación de datos (formato gymbo-export v1)
 docker/            entrypoint, healthcheck, gunicorn, init de PostgreSQL (rol de mínimo privilegio)
 scripts/           backup.sh, restore.sh
 compose.yaml       desarrollo
@@ -53,7 +56,7 @@ compose.prod.yaml  producción
 compose.db-port.yaml  (opcional) expone PostgreSQL en 127.0.0.1 para herramientas gráficas
 ```
 
-Las apps `coaching`, `sharing`, `sync` y `exports` se crearán en sus etapas: no se dejan apps vacías.
+La sincronización no necesita una app propia: usa los endpoints de `training` con `updated_since` y `base_version`.
 
 ---
 
@@ -340,6 +343,55 @@ Una misma cuenta puede ser alumna de varios entrenadores y entrenar a muchos alu
   - Con **3 denuncias de personas distintas**, el contenido se oculta del catálogo hasta que lo revise el staff desde el admin.
   - El autor lo conserva, pero no puede volver a publicarlo mientras esté oculto.
 
+## Exportación de datos
+
+`GET /api/v1/exports/?type=json|csv|zip` (con cuenta; `type`, no `format`, porque DRF reserva `?format=`).
+
+| `type` | Archivo |
+|---|---|
+| `json` (por defecto) | `gymbo-<usuario>-<fecha>.json`: todo en un documento |
+| `csv` | Una tabla, elegida con `table=` (`series` por defecto; también `sesiones`, `rutinas`, `ejercicios`, `mediciones`, `progreso_semanal`) |
+| `zip` | `datos.json` + todas las tablas CSV + `LEEME.txt` con la explicación de campos, unidades y fechas |
+
+- **Qué incluye:** cuenta (username, email, datos de perfil cargados, proveedores vinculados), preferencias, ejercicios propios, rutinas con su plan actual y **todo su historial de versiones**, sesiones con ejercicios y series (peso, repeticiones, RIR, descanso, completada), duración, mediciones y progreso semanal. Lo borrado no se exporta.
+- **Qué no incluye:** contraseñas, hashes, tokens, ni datos de otras personas (entrenadores, alumnos, quienes compartieron rutinas). Las rutinas copiadas o asignadas conservan su texto de atribución.
+- **Formato:** `gymbo-export` versión 1, definido en `apps/exports/format.py`. La app genera **el mismo formato** con los datos locales de un invitado; si cambia, cambian los dos lados.
+  - Fechas de calendario locales (`AAAA-MM-DD`); instantes en UTC (`AAAA-MM-DDTHH:MM:SSZ`).
+  - Cada sesión indica su unidad (kg/lb). El progreso semanal se convierte a la unidad de las preferencias.
+  - Vacío/`null` = no registrado (distinto de 0).
+  - CSV: UTF-8 con BOM, coma, punto decimal, `true`/`false`.
+- **Seguridad:**
+  - Solo la propia cuenta: no hay id en la URL.
+  - No se guarda ningún archivo en el servidor: no hay URLs públicas, ni archivos que vencer o limpiar.
+  - `Cache-Control: no-store`.
+  - Límite `THROTTLE_EXPORT` (30/hora por cuenta), porque cada exportación lee la cuenta entera.
+- **Para un entrenador:** el archivo se puede mandar a quien quieras; no le da acceso a la cuenta ni credenciales.
+
+## Eliminación de cuenta
+
+`DELETE /api/v1/users/me/` con `{password}` (o `{confirm_username}` en cuentas creadas con Google que nunca definieron contraseña). Limitado por IP como los endpoints de autenticación. Responde 204.
+
+Es **inmediata e irreversible**. Implementación: `apps/accounts/deletion.py`.
+
+| Dato | Qué pasa |
+|---|---|
+| Cuenta, perfil, preferencias, Google vinculado | Se borran |
+| Sesiones de login | Se revocan todas al instante (el access token en uso deja de servir) y se borran sus registros |
+| Rutinas propias, versiones, enlaces y accesos compartidos | Se borran. Quienes tenían acceso dejan de verlas |
+| Publicaciones en la comunidad | Desaparecen del catálogo |
+| Copias que otras personas hicieron | **Se conservan**: son de ellas. La atribución pasa a decir «de una cuenta eliminada» |
+| Ejercicios propios | Se borran. Excepción: un ejercicio publicado que el plan de otra persona usa directamente queda sin autor y fuera del catálogo, para no romper ese plan |
+| Sesiones, series y mediciones | Se borran |
+| Relaciones de entrenamiento e invitaciones pendientes | Terminan y se borran. Si la cuenta era de un entrenador, cada alumno **conserva sus rutinas asignadas**, ya desbloqueadas y con todo su historial («Asignada por una cuenta eliminada») |
+| Rutinas que te asignó tu entrenador | Se borran con tu cuenta; la rutina original del entrenador no se toca |
+| Rutinas compartidas contigo | Se borra tu acceso; la rutina sigue siendo de su autor |
+| Denuncias que hiciste | Quedan para moderación, sin el denunciante |
+| Exportaciones | No hay nada guardado en el servidor |
+| Logs técnicos | Solo método, ruta, código y duración; el borrado registra únicamente el id interno de la cuenta |
+| **Backups** | Los datos siguen en los backups hechos antes del borrado hasta que rotan (retención sugerida: 7 diarios + 4 semanales, ≈ 35 días). Si se restaura un backup, hay que volver a aplicar los borrados posteriores |
+
+Lo que está en el teléfono no lo borra el servidor: la app borra los datos locales de esa cuenta al confirmar. Los datos de invitado del dispositivo no se tocan.
+
 ## Producción
 
 `compose.prod.yaml` construye la imagen `prod`. Sus características:
@@ -460,6 +512,8 @@ Políticas:
   - Opcionalmente, nombre, teléfono, género y fecha de nacimiento, solo si el usuario los carga.
 - **Google:** el `sub` y el email al momento de vincular.
 - **Sesiones:** los identificadores (`jti`) de los refresh tokens emitidos, para poder revocarlos.
-- **Entrenamiento:** solo lo que el usuario registrado decide sincronizar (a partir de la Etapa 5).
+- **Entrenamiento:** solo lo que el usuario registrado sincroniza desde su cuenta. Lo que se hizo como invitado queda en el teléfono salvo que la persona elija subirlo al crear la cuenta.
+- **Coaching y compartir:** relaciones, permisos que el alumno otorgó, asignaciones, accesos compartidos, enlaces (solo el hash del token) y denuncias.
+- **Exportaciones:** no se guardan; se generan al pedirlas y se envían en la misma respuesta.
 - **No se reciben:** datos de invitados, recordatorios ni la vibración del temporizador.
 - **Logs:** método, ruta, código y duración. Sin cuerpos, contraseñas, tokens, headers `Authorization` ni query strings.
