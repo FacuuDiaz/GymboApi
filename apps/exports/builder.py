@@ -36,7 +36,18 @@ def _account(user) -> dict:
         "phone": user.phone, "gender": user.gender, "birth_date": user.birth_date.isoformat() if user.birth_date else None,
         "date_joined": fmt.timestamp(user.date_joined),
         "linked_providers": sorted(user.social_identities.values_list("provider", flat=True)),
+        "discoverable": user.discoverable,
+        "is_coach": user.is_coach,
     }
+
+
+def _stars(user) -> list[dict]:
+    from apps.sharing.models import RoutineStar
+
+    return [
+        {"routine_id": str(s.routine_id), "routine_name": s.routine.name, "author": s.routine.owner.username if s.routine.owner_id else "", "starred_at": fmt.timestamp(s.created_at)}
+        for s in RoutineStar.objects.filter(user=user).select_related("routine__owner").order_by("created_at", "routine_id")
+    ]
 
 
 def _exercises(user) -> list[dict]:
@@ -128,4 +139,5 @@ def build_document(user) -> dict:
             for m in BodyMeasurement.objects.filter(owner=user, deleted_at__isnull=True).order_by("date", "kind")
         ],
         "weekly_progress": fmt.weekly_progress(sessions, preferences["unit"]),
+        "stars": _stars(user),
     }

@@ -38,6 +38,11 @@ class User(AbstractUser):
     # apps.accounts.authentication). Set on "log out everywhere", password
     # change and refresh-token reuse, so revocation does not wait for expiry.
     sessions_revoked_at = models.DateTimeField(null=True, blank=True, editable=False)
+    # People search is opt-in: nobody appears in "Buscar" unless they turn this on.
+    discoverable = models.BooleanField(default=False)
+    # Shown as a coach in search (only together with `discoverable`). A label the
+    # person chooses; coaching permissions still come from accepted relationships.
+    is_coach = models.BooleanField(default=False)
 
     objects = UserManager()
 

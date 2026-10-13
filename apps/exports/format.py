@@ -25,6 +25,7 @@ ABOUT = {
     "series": "Una serie cuenta para volumen y progreso solo si está completada y tiene peso y repeticiones. Volumen = peso × repeticiones.",
     "sesiones": "Solo las sesiones completas o parciales cuentan en el progreso semanal. Una semana empieza el lunes.",
     "rutinas": "plan es la versión actual de cada rutina. versions es su historial de versiones (solo en exportaciones de una cuenta; en el dispositivo no hay historial).",
+    "estrellas": "stars son las rutinas publicadas a las que les pusiste estrella (solo en exportaciones de una cuenta).",
     "csv": "UTF-8, separador coma, punto decimal, booleanos true/false. Cada CSV es una tabla de datos.json aplanada.",
     "archivos": {
         "datos.json": "Todo, en un solo documento.",

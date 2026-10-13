@@ -131,6 +131,8 @@ REST_FRAMEWORK = {
         "login_identifier": env.str("THROTTLE_LOGIN_IDENTIFIER", default="5/min"),
         # Per account on data exports: each one reads the whole account.
         "export": env.str("THROTTLE_EXPORT", default="30/hour"),
+        # Per account on people search, so the directory can't be scraped quickly.
+        "search": env.str("THROTTLE_SEARCH", default="60/min"),
     },
     # Behind a reverse proxy, the client IP is the last X-Forwarded-For hop
     # added by that proxy (set NUM_PROXIES to the number of trusted proxies).

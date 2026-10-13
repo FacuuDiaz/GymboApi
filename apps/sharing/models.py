@@ -100,3 +100,21 @@ class ContentReport(TimestampedModel):
             models.UniqueConstraint(fields=["reporter", "kind", "object_id"], condition=Q(status="open"), name="report_one_open_per_reporter"),
         ]
         indexes = [models.Index(fields=["kind", "object_id", "status"], name="report_object_idx")]
+
+
+class RoutineStar(models.Model):
+    """
+    A person's star on a published routine, like a GitHub star: at most one
+    per person and routine (unique), never on one's own routine (enforced in
+    services), and removable. Stars stay if the routine is unpublished and
+    count again if it is republished; they go when the routine or the person
+    is deleted.
+    """
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="routine_stars")
+    routine = models.ForeignKey("training.Routine", on_delete=models.CASCADE, related_name="stars")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["user", "routine"], name="routine_star_once_per_user")]
+        indexes = [models.Index(fields=["user", "-created_at"], name="routine_star_user_recent_idx")]

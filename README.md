@@ -323,9 +323,12 @@ Una misma cuenta puede ser alumna de varios entrenadores y entrenar a muchos alu
 | `POST shared-links/copy/` | Con cuenta | `{token}`: copiar, si el enlace es `copier` |
 | `POST routines/{id}/publish/` · `unpublish/` | Dueño | Publica o retira la rutina del catálogo |
 | `POST exercises/{id}/publish/` · `unpublish/` | Autor | Publica o retira un ejercicio |
-| `GET community/routines/` · `community/exercises/` | Cualquiera | Catálogo con filtros `q`, `goal`, `author`, `muscle`, `equipment` |
+| `GET community/routines/` · `community/exercises/` | Cualquiera | Catálogo con filtros `q`, `goal`, `author`, `muscle`, `equipment`. Las rutinas traen `stars_count` y `starred` (si tocó ⭐ quien pregunta); `ordering=stars` ordena por estrellas |
 | `POST community/routines/{id}/copy/` · `community/exercises/{id}/copy/` | Con cuenta | Copia a tu cuenta |
 | `POST reports/` | Con cuenta | `{kind, object_id, reason, details?}` |
+| `POST / DELETE community/routines/{id}/star/` | Con cuenta | Pone o quita una ⭐ (como en GitHub). `POST` responde `{starred, stars_count}`: 201 si es nueva, 200 si ya estaba. No se puede a rutinas propias (400 `own_routine`) |
+| `GET users/me/stars/` | Con cuenta | Tus rutinas con ⭐ que siguen publicadas, la más reciente primero |
+| `GET users/search/?q=&coach=1` | Con cuenta | Personas que eligieron aparecer (`discoverable`). `q` de 2+ letras sobre el username; `coach=1` lista quienes se marcaron `is_coach`. Solo devuelve `username`, `is_coach` y `routines_count`. Límite `THROTTLE_SEARCH` (60/min por cuenta) |
 
 **Reglas:**
 - **Privacidad:** publicar o compartir muestra el plan y el **username** del autor. Nunca su id, email, perfil, peso, sesiones ni progreso.
@@ -340,6 +343,8 @@ Una misma cuenta puede ser alumna de varios entrenadores y entrenar a muchos alu
   - Los ejercicios que no son integrados ni propios se copian a la cuenta (una vez por ejercicio, con `copied_from`). Así la copia funciona sin conexión y no se rompe si el autor edita o borra su ejercicio.
 - **Editor:** cambia el plan del dueño. La versión queda registrada con `origin: shared_edit` y su autor. No puede activar, compartir ni borrar. Sus ejercicios privados no se aceptan en el plan, porque el dueño no podría verlos.
 - **Rutinas asignadas por un entrenador:** el alumno no puede publicarlas, compartirlas ni crear enlaces (403 `assigned_routine`).
+- **Estrellas:** una por persona y rutina (restricción única en la base). Si la rutina se despublica, la estrella queda guardada y vuelve a contar si se republica; desaparece si se borra la rutina o la cuenta de quien la puso.
+- **Búsqueda de personas:** es opt-in. Nadie aparece salvo que active `discoverable` (`PATCH users/me/`, o en la app: Privacidad → "Aparecer en búsquedas"). `is_coach` es una etiqueta que elige la persona: los permisos de entrenador siguen saliendo solo de relaciones aceptadas.
 - **Moderación:**
   - Solo se puede denunciar contenido publicado, y no el propio.
   - Con **3 denuncias de personas distintas**, el contenido se oculta del catálogo hasta que lo revise el staff desde el admin.
@@ -355,7 +360,7 @@ Una misma cuenta puede ser alumna de varios entrenadores y entrenar a muchos alu
 | `csv` | Una tabla, elegida con `table=` (`series` por defecto; también `sesiones`, `rutinas`, `ejercicios`, `mediciones`, `progreso_semanal`) |
 | `zip` | `datos.json` + todas las tablas CSV + `LEEME.txt` con la explicación de campos, unidades y fechas |
 
-- **Qué incluye:** cuenta (username, email, datos de perfil cargados, proveedores vinculados), preferencias, ejercicios propios, rutinas con su plan actual y **todo su historial de versiones**, sesiones con ejercicios y series (peso, repeticiones, RIR, descanso, completada), duración, mediciones y progreso semanal. Lo borrado no se exporta.
+- **Qué incluye:** cuenta (username, email, datos de perfil cargados, proveedores vinculados), preferencias, ejercicios propios, rutinas con su plan actual y **todo su historial de versiones**, sesiones con ejercicios y series (peso, repeticiones, RIR, descanso, completada), duración, mediciones progreso semanal y las rutinas a las que les pusiste ⭐. Lo borrado no se exporta.
 - **Qué no incluye:** contraseñas, hashes, tokens, ni datos de otras personas (entrenadores, alumnos, quienes compartieron rutinas). Las rutinas copiadas o asignadas conservan su texto de atribución.
 - **Formato:** `gymbo-export` versión 1, definido en `apps/exports/format.py`. La app genera **el mismo formato** con los datos locales de un invitado; si cambia, cambian los dos lados.
   - Fechas de calendario locales (`AAAA-MM-DD`); instantes en UTC (`AAAA-MM-DDTHH:MM:SSZ`).
@@ -387,6 +392,7 @@ Es **inmediata e irreversible**. Implementación: `apps/accounts/deletion.py`.
 | Relaciones de entrenamiento e invitaciones pendientes | Terminan y se borran. Si la cuenta era de un entrenador, cada alumno **conserva sus rutinas asignadas**, ya desbloqueadas y con todo su historial («Asignada por una cuenta eliminada») |
 | Rutinas que te asignó tu entrenador | Se borran con tu cuenta; la rutina original del entrenador no se toca |
 | Rutinas compartidas contigo | Se borra tu acceso; la rutina sigue siendo de su autor |
+| Estrellas | Se borran las que pusiste y las que recibieron tus rutinas |
 | Denuncias que hiciste | Quedan para moderación, sin el denunciante |
 | Exportaciones | No hay nada guardado en el servidor |
 | Logs técnicos | Solo método, ruta, código y duración; el borrado registra únicamente el id interno de la cuenta |

@@ -18,10 +18,12 @@ class PublicRoutineSerializer(serializers.ModelSerializer):
     plan = serializers.SerializerMethodField()
     plan_version = serializers.SerializerMethodField()
     copies_count = serializers.SerializerMethodField()
+    stars_count = serializers.SerializerMethodField()
+    starred = serializers.SerializerMethodField()
 
     class Meta:
         model = Routine
-        fields = ["id", "name", "goal", "duration_weeks", "planning_mode", "author", "attribution", "plan", "plan_version", "published_at", "copies_count", "updated_at"]
+        fields = ["id", "name", "goal", "duration_weeks", "planning_mode", "author", "attribution", "plan", "plan_version", "published_at", "copies_count", "stars_count", "starred", "updated_at"]
 
     def get_author(self, routine) -> str:
         return routine.owner.username
@@ -41,6 +43,20 @@ class PublicRoutineSerializer(serializers.ModelSerializer):
 
     def get_copies_count(self, routine) -> int:
         return getattr(routine, "copies_count", 0)
+
+    def get_stars_count(self, routine) -> int:
+        return getattr(routine, "stars_count", 0)
+
+    def get_starred(self, routine) -> bool:
+        """Whether the requester starred it (always false for guests)."""
+        return bool(getattr(routine, "starred", False))
+
+
+class StarredRoutineSerializer(PublicRoutineSerializer):
+    starred_at = serializers.DateTimeField(read_only=True)
+
+    class Meta(PublicRoutineSerializer.Meta):
+        fields = [*PublicRoutineSerializer.Meta.fields, "starred_at"]
 
 
 class PublicExerciseSerializer(serializers.ModelSerializer):

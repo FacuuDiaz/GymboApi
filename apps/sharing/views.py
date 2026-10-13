@@ -5,13 +5,14 @@ from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
+from rest_framework.generics import ListAPIView
 from rest_framework.views import APIView
 
 from apps.common.pagination import DefaultCursorPagination
 from apps.training.serializers import ExerciseSerializer, RoutineSerializer
 
 from . import services
-from .models import RoutineShare
+from .models import RoutineShare, RoutineStar
 from .serializers import (
     LinkCreatedSerializer,
     LinkCreateSerializer,
@@ -23,6 +24,7 @@ from .serializers import (
     ShareRoleSerializer,
     ShareSerializer,
     SharedEditSerializer,
+    StarredRoutineSerializer,
     TokenSerializer,
 )
 
@@ -183,20 +185,32 @@ class CommunityPagination(DefaultCursorPagination):
     ordering = ("-published_at", "-id")
 
 
+class CommunityRoutinePagination(CommunityPagination):
+    """`?ordering=stars` lists the most starred first (like sorting repos by stars)."""
+
+    def get_ordering(self, request, queryset, view):
+        if request.query_params.get("ordering") == "stars":
+            return ("-stars_count", "-published_at", "-id")
+        return super().get_ordering(request, queryset, view)
+
+
 @extend_schema_view(
-    list=extend_schema(tags=["community"], parameters=[OpenApiParameter("q", str), OpenApiParameter("goal", str, enum=["hypertrophy", "strength"]), OpenApiParameter("author", str)]),
+    list=extend_schema(tags=["community"], parameters=[
+        OpenApiParameter("q", str), OpenApiParameter("goal", str, enum=["hypertrophy", "strength"]), OpenApiParameter("author", str),
+        OpenApiParameter("ordering", str, enum=["recent", "stars"]),
+    ]),
     retrieve=extend_schema(tags=["community"]),
 )
 class CommunityRoutineViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     serializer_class = PublicRoutineSerializer
-    pagination_class = CommunityPagination
+    pagination_class = CommunityRoutinePagination
     lookup_value_converter = "uuid"
 
     def get_permissions(self):
-        return [IsAuthenticated()] if self.action in ("copy", "report") else [AllowAny()]
+        return [IsAuthenticated()] if self.action in ("copy", "report", "star") else [AllowAny()]
 
     def get_queryset(self):
-        qs = services.community_routines()
+        qs = services.with_starred(services.community_routines(), self.request.user)
         params = self.request.query_params
         if q := params.get("q", "").strip():
             qs = qs.filter(name__icontains=q[:80])
@@ -210,6 +224,20 @@ class CommunityRoutineViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, 
     @action(detail=True, methods=["post"])
     def copy(self, request, pk=None):
         return _own_routine_response(request, services.copy_routine(request.user, self.get_object()), status.HTTP_201_CREATED)
+
+    @extend_schema(
+        tags=["community"], request=None,
+        responses={201: OpenApiResponse(description="Estrella agregada: {starred, stars_count}"), 200: OpenApiResponse(description="Ya tenía estrella: {starred, stars_count}"), 204: OpenApiResponse(description="Estrella quitada"), 400: OpenApiResponse(description="own_routine")},
+    )
+    @action(detail=True, methods=["post", "delete"])
+    def star(self, request, pk=None):
+        """POST pone una estrella (una sola vez por persona; no a rutinas propias). DELETE la quita."""
+        if request.method == "DELETE":
+            services.unstar_routine(request.user, pk)
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        created = services.star_routine(request.user, pk)
+        stars_count = RoutineStar.objects.filter(routine_id=pk).count()
+        return Response({"starred": True, "stars_count": stars_count}, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
 
 
 @extend_schema_view(
@@ -240,6 +268,22 @@ class CommunityExerciseViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin,
     def copy(self, request, pk=None):
         exercise = services.copy_exercise(request.user, self.get_object())
         return Response(ExerciseSerializer(exercise, context={"request": request}).data, status=status.HTTP_201_CREATED)
+
+
+class StarPagination(DefaultCursorPagination):
+    ordering = ("-starred_at", "-id")
+
+
+@extend_schema(tags=["community"])
+class StarredRoutinesView(ListAPIView):
+    """Las rutinas a las que les pusiste estrella y siguen publicadas (como las «stars» de GitHub)."""
+
+    serializer_class = StarredRoutineSerializer
+    pagination_class = StarPagination
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return services.with_starred(services.starred_routines(self.request.user), self.request.user)
 
 
 class ReportView(APIView):

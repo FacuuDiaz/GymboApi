@@ -4,11 +4,14 @@ import secrets
 from django.contrib.auth import authenticate
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError, transaction
-from drf_spectacular.utils import OpenApiResponse, extend_schema
+from django.db.models import Count, OuterRef, Subquery
+from django.db.models.functions import Coalesce
+from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
 from rest_framework import generics, status
-from rest_framework.exceptions import APIException, AuthenticationFailed, PermissionDenied
+from rest_framework.exceptions import APIException, AuthenticationFailed, PermissionDenied, ValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from rest_framework_simplejwt.serializers import TokenRefreshSerializer
@@ -17,11 +20,14 @@ from rest_framework_simplejwt.state import token_backend
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from . import google
+from apps.common.pagination import DefaultCursorPagination
+
 from .models import SocialIdentity, User
 from .serializers import (
     AuthResponseSerializer,
     ChangePasswordSerializer,
     DeleteAccountSerializer,
+    DiscoverablePersonSerializer,
     GoogleAuthResponseSerializer,
     GoogleTokenSerializer,
     LoginSerializer,
@@ -351,3 +357,50 @@ class ChangePasswordView(APIView):
         user.save(update_fields=["password"])
         revoke_all_sessions(user)
         return Response(issue_token_pair(user))
+
+
+class PeoplePagination(DefaultCursorPagination):
+    ordering = ("username", "id")
+
+
+class PeopleSearchThrottle(UserRateThrottle):
+    """Per account (ScopedRateThrottle would ignore this scope and read the view's)."""
+
+    scope = "search"
+
+
+class PeopleSearchView(generics.ListAPIView):
+    """
+    People search for "Buscar". Opt-in: only accounts with `discoverable` appear,
+    never the requester, and only their username, the coach label and how many
+    routines they published. `q` (2+ letters) matches the username; `coach=1`
+    lists people who marked themselves as coaches.
+    """
+
+    serializer_class = DiscoverablePersonSerializer
+    pagination_class = PeoplePagination
+    permission_classes = [IsAuthenticated]
+    throttle_classes = [PeopleSearchThrottle]
+
+    @extend_schema(tags=["users"], parameters=[OpenApiParameter("q", str), OpenApiParameter("coach", bool)])
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+
+    def get_queryset(self):
+        from apps.sharing.services import community_routines
+
+        q = self.request.query_params.get("q", "").strip()[:150]
+        coaches_only = self.request.query_params.get("coach") in ("1", "true")
+        if len(q) < 2 and not coaches_only:
+            raise ValidationError({"q": ["Escribí al menos 2 letras."]})
+        published = community_routines().filter(owner=OuterRef("pk")).values("owner").annotate(n=Count("id", distinct=True)).values("n")
+        qs = (
+            User.objects.filter(discoverable=True, is_active=True)
+            .exclude(pk=self.request.user.pk)
+            .annotate(routines_count=Coalesce(Subquery(published), 0))
+        )
+        if q:
+            qs = qs.filter(username__icontains=q)
+        if coaches_only:
+            qs = qs.filter(is_coach=True)
+        return qs

@@ -38,7 +38,7 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             "id", "username", "email", "first_name", "last_name", "phone", "gender", "birth_date",
-            "date_joined", "has_password", "linked_providers",
+            "date_joined", "has_password", "linked_providers", "discoverable", "is_coach",
         ]
         # Changing username/email needs its own verified flow; not editable here yet.
         read_only_fields = ["id", "username", "email", "date_joined"]
@@ -54,6 +54,17 @@ class UserSerializer(serializers.ModelSerializer):
 
     def validate_phone(self, value):
         return _validate_phone(value)
+
+
+class DiscoverablePersonSerializer(serializers.ModelSerializer):
+    """What people search shows about someone: only their username, the coach label and how many routines they published."""
+
+    routines_count = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = User
+        fields = ["username", "is_coach", "routines_count"]
+        read_only_fields = fields
 
 
 class RegisterSerializer(serializers.Serializer):

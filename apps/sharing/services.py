@@ -7,7 +7,7 @@ from datetime import timedelta
 
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError, transaction
-from django.db.models import Count, Max, Q
+from django.db.models import Count, Exists, Max, OuterRef, Q, Subquery
 from django.utils import timezone
 from rest_framework import exceptions
 
@@ -15,7 +15,7 @@ from apps.coaching.services import active_assignment_of, propagate_routine_updat
 from apps.training.models import Exercise, Routine, RoutineVersion
 from apps.training.services import Conflict, check_base_version, normalize_plan, plan_for_owner
 
-from .models import ContentReport, RoutineShare, ShareLink, ShareRole, hash_token
+from .models import ContentReport, RoutineShare, RoutineStar, ShareLink, ShareRole, hash_token
 
 ROLE_RANK = {ShareRole.VIEWER: 1, ShareRole.COPIER: 2, ShareRole.EDITOR: 3}
 EDITOR_FIELDS = {"name", "goal", "duration_weeks", "planning_mode", "plan"}
@@ -219,7 +219,45 @@ def community_routines():
     return (
         Routine.objects.filter(visibility="public", moderation_status="visible", deleted_at__isnull=True, published_at__isnull=False, owner__is_active=True)
         .select_related("owner")
-        .annotate(copies_count=Count("versions__copies", filter=Q(versions__copies__deleted_at__isnull=True), distinct=True))
+        .annotate(
+            copies_count=Count("versions__copies", filter=Q(versions__copies__deleted_at__isnull=True), distinct=True),
+            stars_count=Count("stars", distinct=True),
+        )
+    )
+
+
+def with_starred(queryset, user):
+    """Adds `starred` (did `user` star it?) without one query per routine."""
+    if not getattr(user, "is_authenticated", False):
+        return queryset
+    return queryset.annotate(starred=Exists(RoutineStar.objects.filter(user=user, routine=OuterRef("pk"))))
+
+
+# ── Stars (like GitHub stars) ────────────────────────────────────────────────
+
+def star_routine(user, routine_id) -> bool:
+    """Stars a community routine once. Returns False if it was already starred."""
+    routine = community_routines().filter(id=routine_id).first()
+    if routine is None:
+        raise exceptions.NotFound()
+    if routine.owner_id == user.pk:
+        raise exceptions.ValidationError({"routine": ["No podés darle estrella a tu propia rutina."]}, code="own_routine")
+    _, created = RoutineStar.objects.get_or_create(user=user, routine=routine)
+    return created
+
+
+def unstar_routine(user, routine_id) -> None:
+    """Idempotent, and works even if the routine is no longer published."""
+    RoutineStar.objects.filter(user=user, routine_id=routine_id).delete()
+
+
+def starred_routines(user):
+    """The routines `user` starred that are still in the catalog, most recently starred first."""
+    stars = RoutineStar.objects.filter(user=user)
+    return (
+        community_routines()
+        .filter(id__in=stars.values("routine_id"))
+        .annotate(starred_at=Subquery(stars.filter(routine=OuterRef("pk")).values("created_at")[:1]))
     )
 
 

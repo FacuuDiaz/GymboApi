@@ -190,7 +190,7 @@ def test_publishing_lists_the_routine_publicly_with_only_the_authors_username(us
     autora_client.post(f"{R}{routine['id']}/publish/")
     listed = api.get("/api/v1/community/routines/").json()["results"]
     assert [r["name"] for r in listed] == ["Push Pull Legs"]
-    assert set(listed[0]) == {"id", "name", "goal", "duration_weeks", "planning_mode", "author", "attribution", "plan", "plan_version", "published_at", "copies_count", "updated_at"}
+    assert set(listed[0]) == {"id", "name", "goal", "duration_weeks", "planning_mode", "author", "attribution", "plan", "plan_version", "published_at", "copies_count", "stars_count", "starred", "updated_at"}
     assert listed[0]["author"] == "autora"
     assert api.get("/api/v1/community/routines/", {"q": "push"}).json()["results"] and not api.get("/api/v1/community/routines/", {"goal": "strength"}).json()["results"]
     autora_client.post(f"{R}{routine['id']}/unpublish/")

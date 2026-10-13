@@ -26,4 +26,5 @@ urlpatterns = [
     path("shared-links/resolve/", views.LinkResolveView.as_view(), name="shared-link-resolve"),
     path("shared-links/copy/", views.LinkCopyView.as_view(), name="shared-link-copy"),
     path("reports/", views.ReportView.as_view(), name="reports"),
+    path("users/me/stars/", views.StarredRoutinesView.as_view(), name="my-stars"),
 ]
