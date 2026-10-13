@@ -38,10 +38,14 @@ def test_results_expose_only_the_minimum(people):
     assert result["routines_count"] == 0
 
 
-def test_you_never_find_yourself_and_need_two_letters(people):
+def test_you_never_find_yourself(people):
     people["yo"].patch("/api/v1/users/me/", {"discoverable": True}, format="json")
     assert names(people["yo"].get(S, {"q": "yo"})) == []
-    assert people["yo"].get(S, {"q": "a"}).status_code == 400
+
+
+def test_without_text_it_lists_everyone_who_opted_in(people):
+    assert names(people["yo"].get(S)) == ["ana_coach", "ana_entrena"]
+    assert names(people["yo"].get(S, {"q": ""})) == ["ana_coach", "ana_entrena"]
 
 
 def test_opting_in_and_out_from_the_profile(people):
