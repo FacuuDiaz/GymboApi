@@ -214,10 +214,11 @@ Todas bajo `/api/v1/`. Los errores siempre tienen la forma `{"error": {"code", "
 - **Desvincular:** no se permite si dejaría la cuenta sin forma de entrar. Primero hay que definir una contraseña.
 - **Sin secretos en la app:** el flujo móvil solo necesita *client IDs*, que son públicos.
 
-**Configuración:**
-1. En Google Cloud Console, creá los OAuth Client IDs para Android (package `com.anonymous.gymbo` más el SHA-1 del certificado de firma), iOS y web.
-2. Cargalos separados por comas en `GOOGLE_OAUTH_CLIENT_IDS`.
-3. Mientras esa variable esté vacía, `auth/google/` responde 503 `google_not_configured`.
+**Configuración** (Google Cloud Console → *APIs y servicios* / *Google Auth Platform*):
+1. **Pantalla de consentimiento:** app `Gymbo`, público *Externo*. Mientras esté en modo *Prueba*, solo inician sesión los *usuarios de prueba* que agregues; con *Publicar app* queda abierta (solo pide nombre y email, no exige verificación).
+2. **Cliente "Aplicación web"** (sin orígenes ni redirecciones). Su *ID de cliente* es la audiencia de los tokens que manda la app: va en `GOOGLE_OAUTH_CLIENT_IDS` de esta API y en `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` de la app. **El secreto del cliente no se usa en ningún lado.**
+3. **Cliente "Android":** paquete `com.anonymous.gymbo` + SHA-1 del certificado con el que se firma el APK. Con la firma de prueba actual es `5E:8F:16:06:2E:A3:CD:2C:4A:0D:54:78:76:BA:A6:F3:8C:AB:F6:25` (`keytool -list -v -keystore android/app/debug.keystore -alias androiddebugkey -storepass android`). No se copia nada de este cliente: solo autoriza a esa app firmada a pedir tokens. Si cambia la firma (Play Store), hay que agregar otro cliente Android con la nueva SHA-1, o Google responde `DEVELOPER_ERROR`.
+4. Mientras `GOOGLE_OAUTH_CLIENT_IDS` esté vacía, `auth/google/` responde 503 `google_not_configured`.
 
 ### Protección contra fuerza bruta
 
@@ -459,6 +460,8 @@ El repo se despliega tal cual: Railway construye el `Dockerfile` (su última eta
 
 Gunicorn escucha en el puerto que Railway pone en `$PORT`.
 
+Si `/health/ready/` responde `ok` pero cualquier otro endpoint da 500, las tablas no existen: el *pre-deploy* no corrió `migrate`. Agregá la variable `DJANGO_MIGRATE_ON_START=true` (el contenedor migra al arrancar; es idempotente) y redesplegá.
+
 **1. Base de datos.** En el proyecto: *New → Database → PostgreSQL*. Acepta SSL, así que `DATABASE_SSLMODE=require` funciona.
 
 **2. Variables del servicio de la API** (*Variables*):
@@ -474,7 +477,7 @@ Gunicorn escucha en el puerto que Railway pone en `$PORT`.
 | `DJANGO_NUM_PROXIES` | `1` (para que los límites por IP vean la IP real del cliente) |
 | `FORWARDED_ALLOW_IPS` | `*` (la API solo es accesible a través del proxy de Railway) |
 | `WEB_CONCURRENCY` | `2` (subilo si le das más memoria al servicio) |
-| `GOOGLE_OAUTH_CLIENT_IDS` | opcional, cuando existan los Client IDs |
+| `GOOGLE_OAUTH_CLIENT_IDS` | el *ID de cliente web* de Google (ver §Google Sign-In) |
 
 `PORT` no se define: lo pone Railway.
 
@@ -537,7 +540,7 @@ Políticas:
 
 - Están versionadas en el repositorio.
 - Nunca se ejecutan `flush`, `dropdb` ni `migrate --fake` de forma automática.
-- El entrypoint solo corre `migrate` si se activa `DJANGO_MIGRATE_ON_START=true`. En producción ese valor siempre es `false`: el paso es explícito, con revisión (`--plan`) y un backup previo.
+- El entrypoint solo corre `migrate` si se activa `DJANGO_MIGRATE_ON_START=true`. En `compose.prod.yaml` está fijo en `false`: el paso es explícito, con revisión (`--plan`) y un backup previo. En Railway lo hace el *pre-deploy* de `railway.toml` (o esa variable, si el pre-deploy no corre); las migraciones de este proyecto son aditivas, así que aplicarlas al desplegar es seguro.
 
 ---
 
